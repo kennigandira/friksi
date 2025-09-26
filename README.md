@@ -1,22 +1,20 @@
-# Friksi - Where Ideas Clash, Minds Evolve
+# Friksi - The Battlefield of Ideas
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-black?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 
-**Friksi** (from "friction") is a democratic discussion platform where ideas compete on merit alone. In a world torn by conflict, we believe the battlefield should be intellectual, not physical. Here, friction sparks critical thinking, challenges grow empathy, and authentic human discourse shapes understanding.
+**Friksi** (from "friction") is a democratic discussion platform where ideas compete on merit alone. In a world torn by conflict, we believe the conflict should be intellectual, a little bit mental, but not physical . Here, friction sparks critical thinking, challenges grow empathy, and authentic human discourse shapes understanding.
 
 ## 🔥 The Vision
 
-> **"Turn conflict into conversation. Transform friction into progress."**
-
 While the world wages wars with weapons, we wage wars with words. Friksi is a platform where:
 
-- **Ideas fight, not people** - Every perspective gets a fair shot
-- **Friction creates growth** - Disagreement drives understanding
-- **Truth emerges from debate** - The best arguments win, not the loudest voices
-- **Empathy grows through challenge** - Understanding opposing views builds bridges
+- **Ideas fight, not personal** - Your ideas matter, same with the others.
+- **Friction with dynamic borderlines creates growth** - Disagreement that drives understanding
+- **Truth-seeking Orb** - The best arguments win, not the loudest voices
+- **Bhinneka Tunggal Ika** - Understanding opposing views builds bridges
 
 ## ⚔️ Why Friksi Exists
 
