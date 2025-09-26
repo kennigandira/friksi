@@ -5,7 +5,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-black?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 
-**Friksi** (from "friction") is a democratic discussion platform where ideas compete on merit alone. In a world torn by conflict, we believe the conflict should be intellectual, a little bit mental, but not physical . Here, friction sparks critical thinking, challenges grow empathy, and authentic human discourse shapes understanding.
+**Friksi** (from "friction") is a democratic discussion platform where ideas compete. In a world torn by conflict, we believe the conflict should be intellectual, not physical . Here, friction sparks critical thinking, challenges grow empathy, and authentic human discourse that shapes understanding.
 
 ## 🔥 The Vision
 
