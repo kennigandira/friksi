@@ -1,0 +1,53 @@
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import { ColorSchemeScript, MantineProvider } from '@mantine/core'
+import { Notifications } from '@mantine/notifications'
+import { ModalsProvider } from '@mantine/modals'
+import './globals.css'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: 'Friksi - Democratic Civic Engagement',
+  description:
+    'A next-generation civic engagement platform with democratic moderation and anti-bot protection',
+  keywords: [
+    'civic engagement',
+    'democracy',
+    'community',
+    'discussion',
+    'voting',
+  ],
+  authors: [{ name: 'Friksi Team' }],
+  creator: 'Friksi',
+  publisher: 'Friksi',
+  manifest: '/manifest.json',
+  themeColor: '#2563eb',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <head>
+        <ColorSchemeScript />
+      </head>
+      <body className={inter.className}>
+        <MantineProvider>
+          <ModalsProvider>
+            <Notifications />
+            {children}
+          </ModalsProvider>
+        </MantineProvider>
+      </body>
+    </html>
+  )
+}

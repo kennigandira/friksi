@@ -1,0 +1,87 @@
+'use client'
+
+import { useEffect, ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
+import { Center, Loader, Alert } from '@mantine/core'
+import { IconAlertCircle } from '@tabler/icons-react'
+import { useAuth } from '@/hooks/use-auth'
+
+interface AuthGuardProps {
+  children: ReactNode
+  minLevel?: number
+  requireModerator?: boolean
+  requireAdmin?: boolean
+}
+
+export function AuthGuard({
+  children,
+  minLevel,
+  requireModerator = false,
+  requireAdmin = false,
+}: AuthGuardProps) {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login')
+    }
+  }, [user, loading, router])
+
+  if (loading) {
+    return (
+      <Center h="50vh">
+        <Loader size="lg" />
+      </Center>
+    )
+  }
+
+  if (!user) {
+    return null // Will redirect
+  }
+
+  // Check minimum level requirement
+  if (minLevel && user.level < minLevel) {
+    return (
+      <Alert
+        icon={<IconAlertCircle size={16} />}
+        title="Access Denied"
+        color="red"
+        m="md"
+      >
+        You need to be at least level {minLevel} to access this page. Your
+        current level is {user.level}.
+      </Alert>
+    )
+  }
+
+  // Check moderator requirement
+  if (requireModerator && !user.is_moderator) {
+    return (
+      <Alert
+        icon={<IconAlertCircle size={16} />}
+        title="Moderator Access Required"
+        color="red"
+        m="md"
+      >
+        This page is only accessible to community moderators.
+      </Alert>
+    )
+  }
+
+  // Check admin requirement
+  if (requireAdmin && user.level < 5) {
+    return (
+      <Alert
+        icon={<IconAlertCircle size={16} />}
+        title="Administrator Access Required"
+        color="red"
+        m="md"
+      >
+        This page is only accessible to platform administrators.
+      </Alert>
+    )
+  }
+
+  return <>{children}</>
+}
