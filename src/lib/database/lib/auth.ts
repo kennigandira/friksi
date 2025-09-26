@@ -38,7 +38,7 @@ export class FriksiAuth {
 
     if (data.user && !error) {
       // Create user profile in our users table
-      const { error: profileError } = await supabase.from('users').insert({
+      const { error: profileError } = await (supabase as any).from('users').insert({
         id: data.user.id,
         username: credentials.username,
         email: credentials.email,
@@ -142,7 +142,7 @@ export class FriksiAuth {
     const user = await this.getCurrentUser()
     if (!user) return { success: false, error: 'Not authenticated' }
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('users')
       .update(updates)
       .eq('id', user.id)

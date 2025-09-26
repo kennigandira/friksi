@@ -53,7 +53,7 @@ export class CommentHelpers {
           .from('comments')
           .select('path, depth')
           .eq('id', data.parent_id)
-          .single()
+          .single() as { data: { path: string; depth: number } | null; error: any }
 
         if (parentError || !parentComment) {
           return { comment: null, error: 'Parent comment not found' }
@@ -68,14 +68,14 @@ export class CommentHelpers {
       }
 
       // Insert comment (path will be set by trigger)
-      const { data: comment, error } = await supabase
+      const { data: comment, error } = await (supabase
         .from('comments')
         .insert({
           ...data,
           wilson_score: 0,
-        })
+        } as any)
         .select()
-        .single()
+        .single())
 
       if (error) {
         return { comment: null, error: error.message }
@@ -192,7 +192,7 @@ export class CommentHelpers {
         `
         )
         .eq('id', commentId)
-        .single()
+        .single() as { data: any; error: any }
 
       if (mainError || !mainComment) {
         return { comment: null, error: 'Comment not found' }
@@ -266,7 +266,7 @@ export class CommentHelpers {
           .from('comments')
           .select('upvotes, downvotes')
           .eq('id', commentId)
-          .single()
+          .single() as { data: { upvotes: number; downvotes: number } | null }
 
         if (currentComment) {
           const upvotes = updates.upvotes ?? currentComment.upvotes
@@ -278,12 +278,12 @@ export class CommentHelpers {
         }
       }
 
-      const { data: comment, error } = await supabase
+      const { data: comment, error } = await ((supabase as any)
         .from('comments')
         .update(updateData)
         .eq('id', commentId)
         .select()
-        .single()
+        .single())
 
       if (error) {
         return { comment: null, error: error.message }
@@ -320,7 +320,7 @@ export class CommentHelpers {
         return { success: !error, error: error?.message || null }
       } else {
         // Soft delete
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('comments')
           .update({
             is_deleted: true,
@@ -353,7 +353,7 @@ export class CommentHelpers {
         .from('comments')
         .select('path, thread_id')
         .eq('id', commentId)
-        .single()
+        .single() as { data: { path: string; thread_id: string } | null; error: any }
 
       if (targetError || !targetComment) {
         return { chain: [], error: 'Comment not found' }
@@ -483,7 +483,7 @@ export class CommentHelpers {
         .from('comments')
         .select('upvotes, downvotes, wilson_score, path')
         .eq('id', commentId)
-        .single()
+        .single() as { data: { upvotes: number; downvotes: number; wilson_score: number; path: string } | null; error: any }
 
       if (commentError || !comment) {
         return { stats: null, error: 'Comment not found' }

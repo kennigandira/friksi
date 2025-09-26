@@ -1,12 +1,11 @@
+import { getBrowserSupabaseClient } from '../lib/browser'
+import { createServerSupabaseClient } from '../lib/server'
 import type {
   Tables,
   TablesInsert,
   TablesUpdate,
-  Database,
   UserLevel,
 } from '../types/database.types'
-import { createServerSupabaseClient } from '../lib/server'
-import { getBrowserSupabaseClient } from '../lib/browser'
 
 export type Thread = Tables<'threads'>
 export type ThreadInsert = TablesInsert<'threads'>
@@ -31,7 +30,7 @@ export class ThreadHelpers {
       // Calculate initial hot score
       const hotScore = this.calculateHotScore(0, 0, new Date())
 
-      const { data: thread, error } = await supabase
+      const { data: thread, error } = await (supabase as any)
         .from('threads')
         .insert({
           ...data,
@@ -141,7 +140,7 @@ export class ThreadHelpers {
         `
         )
         .eq('id', threadId)
-        .single()
+        .single() as { data: any; error: any }
 
       if (error) {
         return { thread: null, error: error.message }
@@ -149,7 +148,7 @@ export class ThreadHelpers {
 
       // Increment view count if requested
       if (options.incrementViews && thread) {
-        await supabase
+        await (supabase as any)
           .from('threads')
           .update({ view_count: thread.view_count + 1 })
           .eq('id', threadId)
@@ -189,7 +188,7 @@ export class ThreadHelpers {
         updateData.edited_at = new Date().toISOString()
       }
 
-      const { data: thread, error } = await supabase
+      const { data: thread, error } = await (supabase as any)
         .from('threads')
         .update(updateData)
         .eq('id', threadId)
@@ -231,7 +230,7 @@ export class ThreadHelpers {
         return { success: !error, error: error?.message || null }
       } else {
         // Soft delete
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('threads')
           .update({
             is_deleted: true,
@@ -264,7 +263,7 @@ export class ThreadHelpers {
       const supabase = getBrowserSupabaseClient()
       const { limit = 20, offset = 0 } = options
 
-      const { data: threads, error } = await supabase.rpc('search_threads', {
+      const { data: threads, error } = await (supabase as any).rpc('search_threads', {
         search_query: query,
         category_filter: options.categoryId || null,
         limit_count: limit,
@@ -390,7 +389,7 @@ export class ThreadHelpers {
       const { data: threads, error: fetchError } = await supabase
         .from('threads')
         .select('id, upvotes, downvotes, created_at')
-        .gte('created_at', weekAgo.toISOString())
+        .gte('created_at', weekAgo.toISOString()) as { data: any[] | null; error: any }
 
       if (fetchError) {
         return { updated: 0, error: fetchError.message }
@@ -409,7 +408,7 @@ export class ThreadHelpers {
           thread.downvotes
         )
 
-        const { error: updateError } = await supabase
+        const { error: updateError } = await (supabase as any)
           .from('threads')
           .update({
             hot_score: hotScore,

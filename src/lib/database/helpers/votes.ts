@@ -43,7 +43,7 @@ export class VoteHelpers {
         .eq('user_id', userId)
         .eq('content_type', contentType)
         .eq('content_id', contentId)
-        .single()
+        .single() as { data: any; error: any }
 
       if (checkError && checkError.code !== 'PGRST116') {
         return { success: false, error: checkError.message }
@@ -52,7 +52,7 @@ export class VoteHelpers {
       if (existingVote) {
         if (existingVote.vote_type === voteType) {
           // User is trying to vote the same way - remove vote
-          const { error: deleteError } = await supabase
+          const { error: deleteError } = await (supabase as any)
             .from('votes')
             .delete()
             .eq('id', existingVote.id)
@@ -64,7 +64,7 @@ export class VoteHelpers {
           return { success: true, error: null }
         } else {
           // User is changing their vote
-          const { data: updatedVote, error: updateError } = await supabase
+          const { data: updatedVote, error: updateError } = await (supabase as any)
             .from('votes')
             .update({ vote_type: voteType })
             .eq('id', existingVote.id)
@@ -79,7 +79,7 @@ export class VoteHelpers {
         }
       } else {
         // New vote
-        const { data: newVote, error: insertError } = await supabase
+        const { data: newVote, error: insertError } = await (supabase as any)
           .from('votes')
           .insert({
             user_id: userId,
@@ -120,7 +120,7 @@ export class VoteHelpers {
         .from('votes')
         .select('vote_type')
         .eq('content_type', contentType)
-        .eq('content_id', contentId)
+        .eq('content_id', contentId) as { data: any[] | null; error: any }
 
       if (votesError) {
         return { stats: null, error: votesError.message }
@@ -141,7 +141,7 @@ export class VoteHelpers {
           .eq('user_id', userId)
           .eq('content_type', contentType)
           .eq('content_id', contentId)
-          .single()
+          .single() as { data: any; error: any }
 
         userVote = userVoteData?.vote_type || null
       }
@@ -177,7 +177,7 @@ export class VoteHelpers {
       const supabase = getBrowserSupabaseClient()
       const { limit = 50, offset = 0 } = options
 
-      let query = supabase.from('votes').select('*').eq('user_id', userId)
+      let query = (supabase as any).from('votes').select('*').eq('user_id', userId)
 
       if (options.contentType) {
         query = query.eq('content_type', options.contentType)
@@ -225,7 +225,7 @@ export class VoteHelpers {
       const supabase = getBrowserSupabaseClient()
       const { timeframe = 'all', limit = 20, offset = 0 } = options
 
-      let query = supabase
+      let query = (supabase as any)
         .from('votes')
         .select('content_id, vote_type')
         .eq('content_type', contentType)
@@ -264,7 +264,7 @@ export class VoteHelpers {
       // Aggregate votes by content
       const voteMap = new Map<string, { upvotes: number; downvotes: number }>()
 
-      votes?.forEach(vote => {
+      votes?.forEach((vote: any) => {
         const existing = voteMap.get(vote.content_id) || {
           upvotes: 0,
           downvotes: 0,
@@ -330,7 +330,7 @@ export class VoteHelpers {
         minVotes = 5,
       } = options
 
-      let query = supabase
+      let query = (supabase as any)
         .from('votes')
         .select('content_id, vote_type')
         .eq('content_type', contentType)
@@ -369,7 +369,7 @@ export class VoteHelpers {
       // Aggregate votes by content
       const voteMap = new Map<string, { upvotes: number; downvotes: number }>()
 
-      votes?.forEach(vote => {
+      votes?.forEach((vote: any) => {
         const existing = voteMap.get(vote.content_id) || {
           upvotes: 0,
           downvotes: 0,
@@ -485,7 +485,7 @@ export class VoteHelpers {
         { upvotes: number; downvotes: number }
       >()
 
-      votes?.forEach(vote => {
+      votes?.forEach((vote: any) => {
         const voteTime = new Date(vote.created_at)
         const slotTime = new Date(
           Math.floor(voteTime.getTime() / intervalMs) * intervalMs
@@ -539,7 +539,7 @@ export class VoteHelpers {
         ? createServerSupabaseClient()
         : getBrowserSupabaseClient()
 
-      const { error } = await supabase.from('votes').delete().eq('id', voteId)
+      const { error } = await (supabase as any).from('votes').delete().eq('id', voteId)
 
       return { success: !error, error: error?.message || null }
     } catch (error) {

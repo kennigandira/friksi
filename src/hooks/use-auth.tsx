@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react'
+import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react'
 import { FriksiAuth, type User } from '@/lib/database'
 
 interface AuthContextType {

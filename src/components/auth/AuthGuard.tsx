@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, ReactNode } from 'react'
-import { useRouter } from 'next/navigation'
-import { Center, Loader, Alert } from '@mantine/core'
-import { IconAlertCircle } from '@tabler/icons-react'
 import { useAuth } from '@/hooks/use-auth'
+import { Alert, Center, Loader } from '@mantine/core'
+import { IconAlertCircle } from '@tabler/icons-react'
+import { useRouter } from 'next/navigation'
+import { ReactNode, useEffect } from 'react'
 
 interface AuthGuardProps {
   children: ReactNode
@@ -55,8 +55,8 @@ export function AuthGuard({
     )
   }
 
-  // Check moderator requirement
-  if (requireModerator && !user.is_moderator) {
+  // Check moderator requirement (level 4+ has moderation privileges)
+  if (requireModerator && user.level < 4) {
     return (
       <Alert
         icon={<IconAlertCircle size={16} />}

@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { ColorSchemeScript, MantineProvider } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
 import { ModalsProvider } from '@mantine/modals'
+import { AuthProvider } from '@/hooks/use-auth'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -22,12 +23,13 @@ export const metadata: Metadata = {
   creator: 'Friksi',
   publisher: 'Friksi',
   manifest: '/manifest.json',
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
   themeColor: '#2563eb',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
 }
 
 export default function RootLayout({
@@ -43,8 +45,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <MantineProvider>
           <ModalsProvider>
-            <Notifications />
-            {children}
+            <AuthProvider>
+              <Notifications />
+              {children}
+            </AuthProvider>
           </ModalsProvider>
         </MantineProvider>
       </body>

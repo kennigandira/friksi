@@ -5,7 +5,7 @@ import {
   IconDashboard,
   IconFlag,
   IconRobot,
-  IconQueue,
+  IconList,
   IconCategory,
 } from '@tabler/icons-react'
 import Link from 'next/link'
@@ -13,7 +13,7 @@ import { usePathname } from 'next/navigation'
 
 const moderatorNavItems = [
   { icon: IconDashboard, label: 'Dashboard', href: '/moderate' },
-  { icon: IconQueue, label: 'Moderation Queue', href: '/moderate/queue' },
+  { icon: IconList, label: 'Moderation Queue', href: '/moderate/queue' },
   { icon: IconFlag, label: 'Reports', href: '/moderate/reports' },
   { icon: IconRobot, label: 'Bot Detection', href: '/moderate/bots' },
   { icon: IconCategory, label: 'My Categories', href: '/moderate/categories' },

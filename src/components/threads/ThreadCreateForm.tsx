@@ -34,7 +34,6 @@ export function ThreadCreateForm() {
   })
 
   const handleSubmit = (values: ThreadCreateFormData) => {
-    console.log('Creating thread:', values)
     // TODO: Implement thread creation
   }
 

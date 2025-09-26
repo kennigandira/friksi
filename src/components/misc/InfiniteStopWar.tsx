@@ -23,12 +23,13 @@ export default function InfiniteStopWar() {
       { threshold: 1 }
     )
 
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current)
+    const currentLoader = loaderRef.current
+    if (currentLoader) {
+      observer.observe(currentLoader)
     }
     return () => {
-      if (loaderRef.current) {
-        observer.unobserve(loaderRef.current)
+      if (currentLoader) {
+        observer.unobserve(currentLoader)
       }
     }
   }, [])

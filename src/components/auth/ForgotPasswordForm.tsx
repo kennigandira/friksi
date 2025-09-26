@@ -51,7 +51,7 @@ export function ForgotPasswordForm() {
           Reset link sent!
         </Text>
         <Text size="sm">
-          We've sent a password reset link to your email address. Please check
+          We&apos;ve sent a password reset link to your email address. Please check
           your inbox and follow the instructions.
         </Text>
       </Alert>

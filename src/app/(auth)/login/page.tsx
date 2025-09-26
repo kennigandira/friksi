@@ -16,7 +16,7 @@ export default function LoginPage() {
       <LoginForm />
 
       <Text ta="center" mt="md" size="sm">
-        Don't have an account?{' '}
+        Don&apos;t have an account?{' '}
         <Anchor component={Link} href="/register" fw={500}>
           Create account
         </Anchor>

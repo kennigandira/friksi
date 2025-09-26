@@ -57,9 +57,9 @@ export class UserHelpers {
     try {
       const supabase = getBrowserSupabaseClient()
 
-      let query = supabase.from('users').select('*').eq('id', userId)
+      const query = supabase.from('users').select('*').eq('id', userId)
 
-      const { data: user, error } = await query.single()
+      const { data: user, error } = await query.single() as { data: any; error: any }
 
       if (error || !user) {
         return { user: null, error: 'User not found' }
@@ -78,7 +78,7 @@ export class UserHelpers {
           `
           )
           .eq('user_id', userId)
-          .order('awarded_at', { ascending: false })
+          .order('awarded_at', { ascending: false }) as { data: any[] | null }
 
         userProfile.badges =
           badges?.map(b => ({
@@ -100,7 +100,7 @@ export class UserHelpers {
           `
           )
           .eq('user_id', userId)
-          .eq('is_active', true)
+          .eq('is_active', true) as { data: any[] | null }
 
         userProfile.moderator_categories =
           moderatorCategories?.map(m => ({
@@ -132,7 +132,7 @@ export class UserHelpers {
         .from('users')
         .select('*')
         .eq('id', userId)
-        .single()
+        .single() as { data: any; error: any }
 
       if (error || !user) {
         return { stats: null, error: 'User not found' }
@@ -191,7 +191,7 @@ export class UserHelpers {
         updated_at: new Date().toISOString(),
       }
 
-      const { data: user, error } = await supabase
+      const { data: user, error } = await (supabase as any)
         .from('users')
         .update(updateData)
         .eq('id', userId)
@@ -232,7 +232,7 @@ export class UserHelpers {
         .from('users')
         .select('level, xp')
         .eq('id', userId)
-        .single()
+        .single() as { data: { level: number; xp: number } | null; error: any }
 
       if (userError || !user) {
         return { success: false, error: 'User not found' }
@@ -243,7 +243,7 @@ export class UserHelpers {
       const levelChanged = newLevel !== user.level
 
       // Update user XP and level
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('users')
         .update({
           xp: newXP,
@@ -258,7 +258,7 @@ export class UserHelpers {
       }
 
       // Log XP transaction
-      const { error: transactionError } = await supabase
+      const { error: transactionError } = await (supabase as any)
         .from('xp_transactions')
         .insert({
           user_id: userId,
@@ -274,7 +274,7 @@ export class UserHelpers {
 
       // Log level up activity
       if (levelChanged) {
-        await supabase.from('user_activities').insert({
+        await (supabase as any).from('user_activities').insert({
           user_id: userId,
           activity_type: 'level_up',
           metadata: { old_level: user.level, new_level: newLevel },
@@ -312,7 +312,7 @@ export class UserHelpers {
         .from('users')
         .select('level')
         .eq('id', userId)
-        .single()
+        .single() as { data: { level: number } | null; error: any }
 
       if (error || !user) {
         return { hasLevel: false, userLevel: 1, error: 'User not found' }
@@ -524,7 +524,7 @@ export class UserHelpers {
         ? createServerSupabaseClient()
         : getBrowserSupabaseClient()
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('users')
         .update({
           last_active: new Date().toISOString(),
@@ -556,7 +556,7 @@ export class UserHelpers {
         ? createServerSupabaseClient()
         : getBrowserSupabaseClient()
 
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('users')
         .update({
           account_status: action === 'activate' ? 'active' : action,
@@ -569,7 +569,7 @@ export class UserHelpers {
       }
 
       // Log moderation action
-      const { error: logError } = await supabase
+      const { error: logError } = await (supabase as any)
         .from('user_activities')
         .insert({
           user_id: userId,

@@ -25,7 +25,7 @@ import { useAuth } from '@/hooks/use-auth'
 export function Header() {
   const [opened, { toggle }] = useDisclosure()
   const { user, logout } = useAuth()
-  const { colorScheme, toggleColorScheme } = useColorScheme()
+  const colorScheme = useColorScheme()
   const theme = useMantineTheme()
 
   return (
@@ -48,7 +48,7 @@ export function Header() {
       <Group>
         <ActionIcon
           variant="subtle"
-          onClick={() => toggleColorScheme()}
+          onClick={() => {/* TODO: Implement theme toggle */}}
           size="lg"
         >
           {colorScheme === 'dark' ? (

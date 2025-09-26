@@ -1,3 +1,5 @@
+'use client'
+
 import { AppShell } from '@mantine/core'
 import { Header } from '@/components/layout/Header'
 import { Navigation } from '@/components/layout/Navigation'

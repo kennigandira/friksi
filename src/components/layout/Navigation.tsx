@@ -7,7 +7,7 @@ import {
   IconCategory,
   IconUsers,
   IconTrophy,
-  IconVote,
+  IconThumbUp,
   IconSettings,
   IconShield,
 } from '@tabler/icons-react'
@@ -21,7 +21,7 @@ const mainNavItems = [
   { icon: IconCategory, label: 'Categories', href: '/category' },
   { icon: IconUsers, label: 'Community', href: '/users' },
   { icon: IconTrophy, label: 'Leaderboard', href: '/leaderboard' },
-  { icon: IconVote, label: 'Elections', href: '/elections', badge: '2' },
+  { icon: IconThumbUp, label: 'Elections', href: '/elections', badge: '2' },
 ]
 
 const userNavItems = [

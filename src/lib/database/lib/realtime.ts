@@ -305,9 +305,9 @@ export class FriksiRealtime {
   static unsubscribeAll(): void {
     const supabase = getBrowserSupabaseClient()
 
-    for (const [channelName, channel] of this.channels) {
+    this.channels.forEach((channel, channelName) => {
       supabase.removeChannel(channel)
-    }
+    })
 
     this.channels.clear()
   }
@@ -317,7 +317,7 @@ export class FriksiRealtime {
    */
   static getConnectionStatus(): string {
     const supabase = getBrowserSupabaseClient()
-    return supabase.realtime.connection.state
+    return (supabase.realtime as any).connection?.state || 'unknown'
   }
 
   /**

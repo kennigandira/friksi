@@ -10,7 +10,7 @@ import {
   Avatar,
   ActionIcon,
 } from '@mantine/core'
-import { IconArrowUp, IconArrowDown, IconReply } from '@tabler/icons-react'
+import { IconArrowUp, IconArrowDown, IconCornerDownRight } from '@tabler/icons-react'
 
 interface CommentSectionProps {
   threadId: string
@@ -74,7 +74,7 @@ export function CommentSection({ threadId }: CommentSectionProps) {
           </Group>
 
           <ActionIcon variant="subtle" size="sm">
-            <IconReply size={12} />
+            <IconCornerDownRight size={12} />
           </ActionIcon>
         </Group>
       </Card>

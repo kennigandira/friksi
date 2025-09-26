@@ -13,7 +13,6 @@ export function VotePanel({ threadId }: VotePanelProps) {
   const userVote = null // 'up' | 'down' | null
 
   const handleVote = (voteType: 'up' | 'down') => {
-    console.log(`Voting ${voteType} on thread ${threadId}`)
     // TODO: Implement voting logic
   }
 
