@@ -10,7 +10,7 @@ ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE thread_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comment_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bot_reports ENABLE ROW LEVEL SECURITY;
-ALTER TABLE moderators ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE moderators ENABLE ROW LEVEL SECURITY; -- Table doesn't exist yet
 
 -- Users can read all non-shadowbanned users
 CREATE POLICY "Users can view active users" ON users
@@ -40,7 +40,8 @@ CREATE POLICY "Level 2+ users can create threads" ON threads
         )
     );
 
--- Users can edit their own threads within 1 hour
+-- Users can edit their own threads within 1 hour (disabled - edit_count column doesn't exist)
+/*
 CREATE POLICY "Users can edit own recent threads" ON threads
     FOR UPDATE
     USING (
@@ -48,8 +49,10 @@ CREATE POLICY "Users can edit own recent threads" ON threads
         AND created_at > NOW() - INTERVAL '1 hour'
         AND edit_count < 3
     );
+*/
 
--- Moderators can moderate threads in their category
+-- Moderators can moderate threads in their category (disabled - moderators table doesn't exist)
+/*
 CREATE POLICY "Moderators can moderate threads" ON threads
     FOR UPDATE
     USING (
@@ -60,6 +63,7 @@ CREATE POLICY "Moderators can moderate threads" ON threads
             AND is_active = true
         )
     );
+*/
 
 -- Similar policies for comments
 CREATE POLICY "Public comments are viewable" ON comments
@@ -77,6 +81,8 @@ CREATE POLICY "Level 2+ users can create comments" ON comments
         )
     );
 
+-- Users can edit own recent comments (disabled - edit_count column doesn't exist)
+/*
 CREATE POLICY "Users can edit own recent comments" ON comments
     FOR UPDATE
     USING (
@@ -84,6 +90,7 @@ CREATE POLICY "Users can edit own recent comments" ON comments
         AND created_at > NOW() - INTERVAL '1 hour'
         AND edit_count < 3
     );
+*/
 
 -- Voting policies
 CREATE POLICY "Users can vote on threads" ON thread_votes
@@ -119,6 +126,8 @@ CREATE POLICY "Users can report suspected bots" ON bot_reports
         )
     );
 
+-- Bot report view policies (disabled - references moderators table)
+/*
 CREATE POLICY "Users can view bot reports" ON bot_reports
     FOR SELECT
     USING (
@@ -134,3 +143,4 @@ CREATE POLICY "Users can view bot reports" ON bot_reports
 CREATE POLICY "Moderators are publicly visible" ON moderators
     FOR SELECT
     USING (is_active = true);
+*/

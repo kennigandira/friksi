@@ -16,7 +16,7 @@ CREATE INDEX IF NOT EXISTS idx_categories_active ON categories(is_active) WHERE 
 -- Enhanced thread indexes with composite and filtered indexes
 CREATE INDEX IF NOT EXISTS idx_threads_hot ON threads(is_hot, hot_score DESC) WHERE is_removed = false;
 CREATE INDEX IF NOT EXISTS idx_threads_category_created ON threads(category_id, created_at DESC) WHERE is_removed = false;
-CREATE INDEX IF NOT EXISTS idx_threads_last_activity ON threads(last_activity_at DESC) WHERE is_removed = false;
+-- CREATE INDEX IF NOT EXISTS idx_threads_last_activity ON threads(last_activity_at DESC) WHERE is_removed = false; -- Column doesn't exist yet
 
 -- Enhanced comment indexes
 CREATE INDEX IF NOT EXISTS idx_comments_thread_created ON comments(thread_id, created_at);
@@ -25,7 +25,8 @@ CREATE INDEX IF NOT EXISTS idx_comments_thread_created ON comments(thread_id, cr
 CREATE INDEX IF NOT EXISTS idx_bot_detection_strikes ON bot_detection(strikes) WHERE strikes >= 2;
 CREATE INDEX IF NOT EXISTS idx_bot_reports_reported_user ON bot_reports(reported_user_id) WHERE status = 'pending';
 
--- Enhanced moderation indexes
+-- Enhanced moderation indexes (disabled - tables don't exist yet)
+/*
 CREATE INDEX IF NOT EXISTS idx_moderators_user ON moderators(user_id) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_moderators_category ON moderators(category_id) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_moderation_logs_created ON moderation_logs(created_at DESC);
@@ -57,3 +58,4 @@ CREATE INDEX IF NOT EXISTS idx_poll_votes_poll ON poll_votes(poll_id);
 CREATE INDEX IF NOT EXISTS idx_category_stats_category_date ON category_stats(category_id, stat_date);
 CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_created ON ai_usage_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_purpose ON ai_usage_logs(purpose);
+*/

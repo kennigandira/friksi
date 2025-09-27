@@ -1,7 +1,10 @@
 -- ============================================
--- MIGRATION: Create Missing Tables Part 1
+-- MIGRATION: Create Missing Tables Part 1 (TEMPORARILY DISABLED)
 -- Edit History, Enhanced Moderation, and Temporary Bans
+-- Need to create base tables first (moderators, elections, etc.)
 -- ============================================
+
+/*
 
 -- Thread edit history
 CREATE TABLE IF NOT EXISTS thread_edits (
@@ -76,3 +79,4 @@ CREATE TABLE IF NOT EXISTS temporary_bans (
     lifted_by UUID REFERENCES users(id),
     lift_reason TEXT
 );
+*/

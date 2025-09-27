@@ -1,7 +1,9 @@
 -- ============================================
--- MIGRATION: Create Missing Tables Part 3
+-- MIGRATION: Create Missing Tables Part 3 (TEMPORARILY DISABLED)
 -- Analytics, AI Usage, and Enhanced Digests
 -- ============================================
+
+/*
 
 -- Enhanced thread summaries with top contributors
 ALTER TABLE thread_summaries
@@ -99,3 +101,4 @@ ADD COLUMN IF NOT EXISTS digest_frequency TEXT DEFAULT 'daily' CHECK (digest_fre
 ADD COLUMN IF NOT EXISTS digest_time TIME DEFAULT '09:00:00',
 ADD COLUMN IF NOT EXISTS quiet_hours_start TIME,
 ADD COLUMN IF NOT EXISTS quiet_hours_end TIME;
+*/

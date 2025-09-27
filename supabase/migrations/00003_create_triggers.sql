@@ -12,7 +12,6 @@ BEGIN
   UPDATE threads
   SET
     hot_score = calculate_hot_score(NEW.upvotes, NEW.downvotes, NEW.created_at),
-    wilson_score = calculate_wilson_score(NEW.upvotes, NEW.downvotes),
     updated_at = NOW()
   WHERE id = NEW.id;
 
@@ -33,16 +32,16 @@ RETURNS TRIGGER AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     UPDATE categories
-    SET thread_count = thread_count + 1
+    SET post_count = post_count + 1
     WHERE id = NEW.category_id;
 
-    -- Award XP for thread creation
-    PERFORM award_xp(NEW.author_id, 'thread_created', 'thread', NEW.id);
+    -- Award XP for thread creation (temporarily disabled until xp_transactions table exists)
+    -- PERFORM award_xp(NEW.user_id, 'thread_created', 'thread', NEW.id);
 
     RETURN NEW;
   ELSIF TG_OP = 'DELETE' THEN
     UPDATE categories
-    SET thread_count = thread_count - 1
+    SET post_count = post_count - 1
     WHERE id = OLD.category_id;
 
     RETURN OLD;
@@ -70,7 +69,7 @@ CREATE OR REPLACE FUNCTION update_thread_activity()
 RETURNS TRIGGER AS $$
 BEGIN
   UPDATE threads
-  SET last_activity_at = NOW()
+  SET updated_at = NOW()
   WHERE id = NEW.thread_id;
 
   RETURN NEW;
@@ -118,11 +117,11 @@ BEGIN
     UPDATE threads
     SET
       comment_count = comment_count + 1,
-      last_activity_at = NOW()
+      updated_at = NOW()
     WHERE id = NEW.thread_id;
 
-    -- Award XP for comment creation
-    PERFORM award_xp(NEW.author_id, 'comment_created', 'comment', NEW.id);
+    -- Award XP for comment creation (temporarily disabled until xp_transactions table exists)
+    -- PERFORM award_xp(NEW.user_id, 'comment_created', 'comment', NEW.id);
 
     RETURN NEW;
   ELSIF TG_OP = 'DELETE' THEN
@@ -154,7 +153,8 @@ CREATE TRIGGER trigger_comment_delete
 CREATE OR REPLACE FUNCTION update_comment_wilson_score()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.wilson_score := calculate_wilson_score(NEW.upvotes, NEW.downvotes);
+  -- Wilson score calculation disabled until column is added to schema
+  -- NEW.wilson_score := calculate_wilson_score(NEW.upvotes, NEW.downvotes);
   NEW.updated_at := NOW();
 
   RETURN NEW;
@@ -172,134 +172,119 @@ CREATE TRIGGER trigger_update_comment_wilson_score
 -- VOTE TRIGGERS
 -- ============================================================================
 
--- Update vote counts when votes are created/updated/deleted
-CREATE OR REPLACE FUNCTION update_vote_counts()
+-- Update thread vote counts when thread votes are created/updated/deleted
+CREATE OR REPLACE FUNCTION update_thread_vote_counts()
 RETURNS TRIGGER AS $$
-DECLARE
-  vote_change INTEGER := 0;
-  content_author_id UUID;
 BEGIN
   IF TG_OP = 'INSERT' THEN
-    -- Award XP for voting
-    PERFORM award_xp(NEW.user_id, 'voted', NEW.content_type, NEW.content_id);
-
-    -- Update vote counts
+    -- Update thread vote counts
     IF NEW.vote_type = 'upvote' THEN
-      vote_change := 1;
+      UPDATE threads SET upvotes = upvotes + 1 WHERE id = NEW.thread_id;
     ELSE
-      vote_change := -1;
+      UPDATE threads SET downvotes = downvotes + 1 WHERE id = NEW.thread_id;
     END IF;
-
-    -- Update thread or comment vote counts
-    IF NEW.content_type = 'thread' THEN
-      UPDATE threads
-      SET upvotes = CASE WHEN NEW.vote_type = 'upvote' THEN upvotes + 1 ELSE upvotes END,
-          downvotes = CASE WHEN NEW.vote_type = 'downvote' THEN downvotes + 1 ELSE downvotes END
-      WHERE id = NEW.content_id
-      RETURNING author_id INTO content_author_id;
-
-      -- Award XP to content author
-      IF NEW.vote_type = 'upvote' THEN
-        PERFORM award_xp(content_author_id, 'upvote_received', 'thread', NEW.content_id);
-      ELSE
-        PERFORM award_xp(content_author_id, 'downvote_received', 'thread', NEW.content_id);
-      END IF;
-
-    ELSIF NEW.content_type = 'comment' THEN
-      UPDATE comments
-      SET upvotes = CASE WHEN NEW.vote_type = 'upvote' THEN upvotes + 1 ELSE upvotes END,
-          downvotes = CASE WHEN NEW.vote_type = 'downvote' THEN downvotes + 1 ELSE downvotes END
-      WHERE id = NEW.content_id
-      RETURNING author_id INTO content_author_id;
-
-      -- Award XP to content author
-      IF NEW.vote_type = 'upvote' THEN
-        PERFORM award_xp(content_author_id, 'upvote_received', 'comment', NEW.content_id);
-      ELSE
-        PERFORM award_xp(content_author_id, 'downvote_received', 'comment', NEW.content_id);
-      END IF;
-    END IF;
-
     RETURN NEW;
-
+    
   ELSIF TG_OP = 'UPDATE' THEN
     -- Handle vote changes (upvote to downvote or vice versa)
     IF OLD.vote_type != NEW.vote_type THEN
-      -- Get content author for XP awards
-      IF NEW.content_type = 'thread' THEN
-        SELECT author_id INTO content_author_id FROM threads WHERE id = NEW.content_id;
-
-        IF OLD.vote_type = 'upvote' AND NEW.vote_type = 'downvote' THEN
-          UPDATE threads
-          SET upvotes = upvotes - 1, downvotes = downvotes + 1
-          WHERE id = NEW.content_id;
-          -- Reverse previous XP and award new XP
-          PERFORM award_xp(content_author_id, 'downvote_received', 'thread', NEW.content_id);
-        ELSIF OLD.vote_type = 'downvote' AND NEW.vote_type = 'upvote' THEN
-          UPDATE threads
-          SET upvotes = upvotes + 1, downvotes = downvotes - 1
-          WHERE id = NEW.content_id;
-          PERFORM award_xp(content_author_id, 'upvote_received', 'thread', NEW.content_id);
-        END IF;
-
-      ELSIF NEW.content_type = 'comment' THEN
-        SELECT author_id INTO content_author_id FROM comments WHERE id = NEW.content_id;
-
-        IF OLD.vote_type = 'upvote' AND NEW.vote_type = 'downvote' THEN
-          UPDATE comments
-          SET upvotes = upvotes - 1, downvotes = downvotes + 1
-          WHERE id = NEW.content_id;
-          PERFORM award_xp(content_author_id, 'downvote_received', 'comment', NEW.content_id);
-        ELSIF OLD.vote_type = 'downvote' AND NEW.vote_type = 'upvote' THEN
-          UPDATE comments
-          SET upvotes = upvotes + 1, downvotes = downvotes - 1
-          WHERE id = NEW.content_id;
-          PERFORM award_xp(content_author_id, 'upvote_received', 'comment', NEW.content_id);
-        END IF;
+      IF OLD.vote_type = 'upvote' AND NEW.vote_type = 'downvote' THEN
+        UPDATE threads SET upvotes = upvotes - 1, downvotes = downvotes + 1 WHERE id = NEW.thread_id;
+      ELSIF OLD.vote_type = 'downvote' AND NEW.vote_type = 'upvote' THEN
+        UPDATE threads SET upvotes = upvotes + 1, downvotes = downvotes - 1 WHERE id = NEW.thread_id;
       END IF;
     END IF;
-
     RETURN NEW;
-
+    
   ELSIF TG_OP = 'DELETE' THEN
     -- Remove vote counts
-    IF OLD.content_type = 'thread' THEN
-      UPDATE threads
-      SET upvotes = CASE WHEN OLD.vote_type = 'upvote' THEN upvotes - 1 ELSE upvotes END,
-          downvotes = CASE WHEN OLD.vote_type = 'downvote' THEN downvotes - 1 ELSE downvotes END
-      WHERE id = OLD.content_id;
-    ELSIF OLD.content_type = 'comment' THEN
-      UPDATE comments
-      SET upvotes = CASE WHEN OLD.vote_type = 'upvote' THEN upvotes - 1 ELSE upvotes END,
-          downvotes = CASE WHEN OLD.vote_type = 'downvote' THEN downvotes - 1 ELSE downvotes END
-      WHERE id = OLD.content_id;
+    IF OLD.vote_type = 'upvote' THEN
+      UPDATE threads SET upvotes = upvotes - 1 WHERE id = OLD.thread_id;
+    ELSE
+      UPDATE threads SET downvotes = downvotes - 1 WHERE id = OLD.thread_id;
     END IF;
-
     RETURN OLD;
   END IF;
-
+  
   RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
--- Triggers for vote count updates
-DROP TRIGGER IF EXISTS trigger_vote_insert ON votes;
-CREATE TRIGGER trigger_vote_insert
-  AFTER INSERT ON votes
-  FOR EACH ROW
-  EXECUTE FUNCTION update_vote_counts();
+-- Update comment vote counts when comment votes are created/updated/deleted
+CREATE OR REPLACE FUNCTION update_comment_vote_counts()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    -- Update comment vote counts
+    IF NEW.vote_type = 'upvote' THEN
+      UPDATE comments SET upvotes = upvotes + 1 WHERE id = NEW.comment_id;
+    ELSE
+      UPDATE comments SET downvotes = downvotes + 1 WHERE id = NEW.comment_id;
+    END IF;
+    RETURN NEW;
+    
+  ELSIF TG_OP = 'UPDATE' THEN
+    -- Handle vote changes (upvote to downvote or vice versa)
+    IF OLD.vote_type != NEW.vote_type THEN
+      IF OLD.vote_type = 'upvote' AND NEW.vote_type = 'downvote' THEN
+        UPDATE comments SET upvotes = upvotes - 1, downvotes = downvotes + 1 WHERE id = NEW.comment_id;
+      ELSIF OLD.vote_type = 'downvote' AND NEW.vote_type = 'upvote' THEN
+        UPDATE comments SET upvotes = upvotes + 1, downvotes = downvotes - 1 WHERE id = NEW.comment_id;
+      END IF;
+    END IF;
+    RETURN NEW;
+    
+  ELSIF TG_OP = 'DELETE' THEN
+    -- Remove vote counts
+    IF OLD.vote_type = 'upvote' THEN
+      UPDATE comments SET upvotes = upvotes - 1 WHERE id = OLD.comment_id;
+    ELSE
+      UPDATE comments SET downvotes = downvotes - 1 WHERE id = OLD.comment_id;
+    END IF;
+    RETURN OLD;
+  END IF;
+  
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trigger_vote_update ON votes;
-CREATE TRIGGER trigger_vote_update
-  AFTER UPDATE ON votes
+-- Triggers for thread vote count updates
+DROP TRIGGER IF EXISTS trigger_thread_vote_insert ON thread_votes;
+CREATE TRIGGER trigger_thread_vote_insert
+  AFTER INSERT ON thread_votes
   FOR EACH ROW
-  EXECUTE FUNCTION update_vote_counts();
+  EXECUTE FUNCTION update_thread_vote_counts();
 
-DROP TRIGGER IF EXISTS trigger_vote_delete ON votes;
-CREATE TRIGGER trigger_vote_delete
-  AFTER DELETE ON votes
+DROP TRIGGER IF EXISTS trigger_thread_vote_update ON thread_votes;
+CREATE TRIGGER trigger_thread_vote_update
+  AFTER UPDATE ON thread_votes
   FOR EACH ROW
-  EXECUTE FUNCTION update_vote_counts();
+  EXECUTE FUNCTION update_thread_vote_counts();
+
+DROP TRIGGER IF EXISTS trigger_thread_vote_delete ON thread_votes;
+CREATE TRIGGER trigger_thread_vote_delete
+  AFTER DELETE ON thread_votes
+  FOR EACH ROW
+  EXECUTE FUNCTION update_thread_vote_counts();
+
+-- Triggers for comment vote count updates  
+DROP TRIGGER IF EXISTS trigger_comment_vote_insert ON comment_votes;
+CREATE TRIGGER trigger_comment_vote_insert
+  AFTER INSERT ON comment_votes
+  FOR EACH ROW
+  EXECUTE FUNCTION update_comment_vote_counts();
+
+DROP TRIGGER IF EXISTS trigger_comment_vote_update ON comment_votes;
+CREATE TRIGGER trigger_comment_vote_update
+  AFTER UPDATE ON comment_votes
+  FOR EACH ROW
+  EXECUTE FUNCTION update_comment_vote_counts();
+
+DROP TRIGGER IF EXISTS trigger_comment_vote_delete ON comment_votes;
+CREATE TRIGGER trigger_comment_vote_delete
+  AFTER DELETE ON comment_votes
+  FOR EACH ROW
+  EXECUTE FUNCTION update_comment_vote_counts();
 
 -- ============================================================================
 -- USER TRIGGERS
@@ -330,11 +315,7 @@ CREATE TRIGGER trigger_update_activity_comment
   FOR EACH ROW
   EXECUTE FUNCTION update_user_activity();
 
-DROP TRIGGER IF EXISTS trigger_update_activity_vote ON votes;
-CREATE TRIGGER trigger_update_activity_vote
-  AFTER INSERT ON votes
-  FOR EACH ROW
-  EXECUTE FUNCTION update_user_activity();
+-- Vote activity triggers are handled by separate thread_votes and comment_votes triggers
 
 -- Track post length for bot detection
 CREATE OR REPLACE FUNCTION track_post_length()
@@ -396,7 +377,8 @@ CREATE TRIGGER trigger_track_comment_length
 -- CATEGORY TRIGGERS
 -- ============================================================================
 
--- Set category path on insert/update
+-- Set category path on insert/update (disabled - requires path/level columns and generate_category_path function)
+/*
 CREATE OR REPLACE FUNCTION set_category_path()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -424,11 +406,13 @@ CREATE TRIGGER trigger_set_category_path
   BEFORE INSERT OR UPDATE OF parent_id ON categories
   FOR EACH ROW
   EXECUTE FUNCTION set_category_path();
+*/
 
 -- ============================================================================
--- BOT DETECTION TRIGGERS
+-- BOT DETECTION TRIGGERS (disabled - requires bot_flags table)
 -- ============================================================================
 
+/*
 -- Update bot status when flags are added
 CREATE OR REPLACE FUNCTION check_bot_flags()
 RETURNS TRIGGER AS $$
@@ -446,11 +430,13 @@ CREATE TRIGGER trigger_check_bot_flags
   AFTER INSERT ON bot_flags
   FOR EACH ROW
   EXECUTE FUNCTION check_bot_flags();
+*/
 
 -- ============================================================================
--- BADGE TRIGGERS
+-- BADGE TRIGGERS (disabled - requires badges and user_badges tables)
 -- ============================================================================
 
+/*
 -- Update badge awarded count
 CREATE OR REPLACE FUNCTION update_badge_count()
 RETURNS TRIGGER AS $$
@@ -485,6 +471,7 @@ CREATE TRIGGER trigger_badge_removed
   AFTER DELETE ON user_badges
   FOR EACH ROW
   EXECUTE FUNCTION update_badge_count();
+*/
 
 -- ============================================================================
 -- SUBSCRIPTION TRIGGERS

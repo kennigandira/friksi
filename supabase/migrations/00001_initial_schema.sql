@@ -45,8 +45,6 @@ CREATE TABLE IF NOT EXISTS users (
 -- Trust score calculation factors
 CREATE TABLE IF NOT EXISTS trust_factors (
   user_id UUID REFERENCES users(id) ON DELETE CASCADE PRIMARY KEY,
-  account_age_days INTEGER GENERATED ALWAYS AS
-    (EXTRACT(DAY FROM NOW() - (SELECT created_at FROM users WHERE id = user_id))) STORED,
   verified_email BOOLEAN DEFAULT false,
   verified_phone BOOLEAN DEFAULT false,
   positive_interactions INTEGER DEFAULT 0,
@@ -56,6 +54,14 @@ CREATE TABLE IF NOT EXISTS trust_factors (
   false_reports INTEGER DEFAULT 0,
   updated_at TIMESTAMP DEFAULT NOW()
 );
+
+-- View for trust factors with calculated account age
+CREATE OR REPLACE VIEW trust_factors_with_age AS
+SELECT 
+  tf.*,
+  EXTRACT(DAY FROM NOW() - u.created_at)::INTEGER AS account_age_days
+FROM trust_factors tf
+JOIN users u ON tf.user_id = u.id;
 
 -- User sessions for authentication (optional with Supabase Auth)
 CREATE TABLE IF NOT EXISTS user_sessions (

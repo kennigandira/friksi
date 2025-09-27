@@ -1,7 +1,9 @@
 -- ============================================
--- MIGRATION: Create Missing Tables Part 2
+-- MIGRATION: Create Missing Tables Part 2 (TEMPORARILY DISABLED)
 -- Polls, Level Unlocks, and Analytics
 -- ============================================
+
+/*
 
 -- Enhanced badges with missing columns
 ALTER TABLE badges
@@ -89,3 +91,4 @@ CREATE TABLE IF NOT EXISTS poll_votes (
     voted_at TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY (poll_id, voter_id)
 );
+*/

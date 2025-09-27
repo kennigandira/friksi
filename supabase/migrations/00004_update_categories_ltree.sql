@@ -68,5 +68,9 @@ WHERE categories.id = ch.id;
 CREATE INDEX IF NOT EXISTS idx_categories_path_gist ON categories USING GIST (path);
 
 -- Add constraint to ensure unique rule numbers per category
-ALTER TABLE category_rules
-ADD CONSTRAINT IF NOT EXISTS unique_rule_number UNIQUE(category_id, rule_number);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unique_rule_number') THEN
+        ALTER TABLE category_rules ADD CONSTRAINT unique_rule_number UNIQUE(category_id, rule_number);
+    END IF;
+END $$;
