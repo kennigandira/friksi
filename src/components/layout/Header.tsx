@@ -15,17 +15,15 @@ import {
   IconSettings,
   IconLogout,
   IconBell,
-  IconSun,
-  IconMoon,
 } from '@tabler/icons-react'
-import { useDisclosure, useColorScheme } from '@mantine/hooks'
+import { useDisclosure } from '@mantine/hooks'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/use-auth'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 export function Header() {
   const [opened, { toggle }] = useDisclosure()
   const { user, logout } = useAuth()
-  const colorScheme = useColorScheme()
   const theme = useMantineTheme()
 
   return (
@@ -46,17 +44,7 @@ export function Header() {
       </Group>
 
       <Group>
-        <ActionIcon
-          variant="subtle"
-          onClick={() => {/* TODO: Implement theme toggle */}}
-          size="lg"
-        >
-          {colorScheme === 'dark' ? (
-            <IconSun size={18} />
-          ) : (
-            <IconMoon size={18} />
-          )}
-        </ActionIcon>
+        <ThemeToggle />
 
         {user ? (
           <>

@@ -5,6 +5,8 @@ import { Notifications } from '@mantine/notifications'
 import { ModalsProvider } from '@mantine/modals'
 import { AuthProvider } from '@/hooks/use-auth'
 import './globals.css'
+import '@mantine/core/styles.css'
+import '@mantine/carousel/styles.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -38,16 +40,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <ColorSchemeScript />
+        <ColorSchemeScript defaultColorScheme="light" />
       </head>
       <body className={inter.className}>
-        <MantineProvider>
+        <MantineProvider defaultColorScheme="auto">
           <ModalsProvider>
             <AuthProvider>
-              <Notifications />
-              {children}
+              <>
+                <Notifications />
+                {children}
+              </>
             </AuthProvider>
           </ModalsProvider>
         </MantineProvider>
