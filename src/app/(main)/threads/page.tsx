@@ -1,9 +1,44 @@
-import { Title, Group, Button, Select, Container } from '@mantine/core'
-import { ThreadList } from '@/components/threads/ThreadList'
+import { Suspense } from 'react'
+import { Title, Group, Button, Container } from '@mantine/core'
+import { ThreadListContainer } from '@/components/threads/ThreadListContainer'
+import { ThreadSkeleton } from '@/components/threads/ThreadSkeleton'
+import { ThreadFilters } from '@/components/threads/ThreadFilters'
 import { IconPlus } from '@tabler/icons-react'
 import Link from 'next/link'
+import { ThreadHelpers } from '@/lib/database/helpers/threads'
+import { CategoryHelpers } from '@/lib/database/helpers/categories'
 
-export default function ThreadsPage() {
+interface ThreadsPageProps {
+  searchParams: {
+    sort?: 'hot' | 'new' | 'top' | 'controversial'
+    category?: string
+  }
+}
+
+export default async function ThreadsPage({ searchParams }: ThreadsPageProps) {
+  const sortBy = searchParams.sort || 'hot'
+  const categoryId = searchParams.category || 'all'
+
+  // Fetch threads and categories server-side
+  const [threadsResult, categoriesResult] = await Promise.all([
+    ThreadHelpers.getAllThreads({
+      sortBy,
+      categoryId: categoryId === 'all' ? undefined : categoryId,
+      limit: 50,
+      useServerClient: true,
+    }),
+    CategoryHelpers.getMainCategories({ useServerClient: true }),
+  ])
+
+  if (threadsResult.error) {
+    return (
+      <Container size="lg">
+        <Title order={1} mb="xl">All Discussions</Title>
+        <div>Error loading threads: {threadsResult.error}</div>
+      </Container>
+    )
+  }
+
   return (
     <Container size="lg">
       <Group justify="space-between" mb="xl">
@@ -17,30 +52,19 @@ export default function ThreadsPage() {
         </Button>
       </Group>
 
-      <Group mb="lg">
-        <Select
-          placeholder="Sort by"
-          data={[
-            { value: 'hot', label: 'Hot' },
-            { value: 'new', label: 'New' },
-            { value: 'top', label: 'Top' },
-            { value: 'controversial', label: 'Controversial' },
-          ]}
-          defaultValue="hot"
-        />
-        <Select
-          placeholder="Filter by category"
-          data={[
-            { value: 'all', label: 'All Categories' },
-            { value: 'technology', label: 'Technology' },
-            { value: 'politics', label: 'Politics' },
-            { value: 'science', label: 'Science' },
-          ]}
-          defaultValue="all"
-        />
-      </Group>
+      <ThreadFilters
+        categories={categoriesResult.categories || []}
+        currentSort={sortBy}
+        currentCategory={categoryId}
+      />
 
-      <ThreadList sortBy="hot" />
+      <Suspense fallback={<ThreadSkeleton count={10} />}>
+        <ThreadListContainer
+          threads={threadsResult.threads}
+          loading={false}
+          showViewToggle={false}
+        />
+      </Suspense>
     </Container>
   )
 }

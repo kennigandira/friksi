@@ -1,0 +1,103 @@
+/* Hot Thread Animations */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Hot Thread Classes */
+.hot-thread-container {
+  container-type: inline-size;
+}
+
+.hot-thread {
+  animation: pulse 2s ease-in-out infinite;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 107, 107, 0.15) 0%,
+    rgba(255, 140, 0, 0.15) 100%
+  );
+}
+
+.trending-thread {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.thread-enter {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.sidebar-enter {
+  animation: slideIn 0.4s ease-out;
+}
+
+/* Container Queries */
+@container (min-width: 400px) {
+  .thread-card {
+    grid-template-columns: auto 1fr auto;
+  }
+}
+
+@container (max-width: 399px) {
+  .thread-metadata {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* Touch Target Optimization */
+@media (pointer: coarse) {
+  .action-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .hot-thread {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 107, 107, 0.08) 0%,
+      rgba(255, 140, 0, 0.08) 100%
+    );
+  }
+}

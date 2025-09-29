@@ -125,24 +125,27 @@ export class ThreadHelpers {
    */
   static async getThread(
     threadId: string,
-    options: { incrementViews?: boolean } = {}
+    options: { incrementViews?: boolean; useServerClient?: boolean } = {}
   ): Promise<{ thread: Thread | null; error: string | null }> {
     try {
-      const supabase = getBrowserSupabaseClient()
+      console.log('[ThreadHelpers.getThread] Called with:', { threadId, options })
+
+      const supabase = options.useServerClient
+        ? createServerSupabaseClient()
+        : getBrowserSupabaseClient()
+
+      console.log('[ThreadHelpers.getThread] Using client:', options.useServerClient ? 'server' : 'browser')
 
       const { data: thread, error } = await supabase
         .from('threads')
-        .select(
-          `
-          *,
-          users!threads_user_id_fkey(username, avatar_url, level, is_bot),
-          categories!threads_category_id_fkey(name, slug, path)
-        `
-        )
+        .select('*')
         .eq('id', threadId)
         .single() as { data: any; error: any }
 
+      console.log('[ThreadHelpers.getThread] Query result:', { thread, error })
+
       if (error) {
+        console.error('[ThreadHelpers.getThread] Database error:', error)
         return { thread: null, error: error.message }
       }
 
@@ -158,6 +161,7 @@ export class ThreadHelpers {
 
       return { thread, error: null }
     } catch (error) {
+      console.error('[ThreadHelpers.getThread] Caught error:', error)
       return {
         thread: null,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -269,6 +273,80 @@ export class ThreadHelpers {
         limit_count: limit,
         offset_count: offset,
       })
+
+      if (error) {
+        return { threads: [], error: error.message }
+      }
+
+      return { threads: threads || [], error: null }
+    } catch (error) {
+      return {
+        threads: [],
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }
+    }
+  }
+
+  /**
+   * Get all threads with sorting and filtering
+   */
+  static async getAllThreads(
+    options: {
+      sortBy?: 'hot' | 'new' | 'top' | 'controversial'
+      categoryId?: string
+      limit?: number
+      offset?: number
+      useServerClient?: boolean
+    } = {}
+  ): Promise<{ threads: any[]; error: string | null }> {
+    try {
+      const supabase = options.useServerClient
+        ? createServerSupabaseClient()
+        : getBrowserSupabaseClient()
+
+      const {
+        sortBy = 'hot',
+        categoryId,
+        limit = 20,
+        offset = 0,
+      } = options
+
+      let query = supabase
+        .from('threads')
+        .select(
+          `
+          *,
+          users!threads_user_id_fkey(username, avatar_url, level),
+          categories!threads_category_id_fkey(name, slug)
+        `
+        )
+        .eq('is_removed', false)
+
+      // Apply category filter if specified
+      if (categoryId && categoryId !== 'all') {
+        query = query.eq('category_id', categoryId)
+      }
+
+      // Apply sorting
+      switch (sortBy) {
+        case 'hot':
+          query = query.order('hot_score', { ascending: false })
+          break
+        case 'new':
+          query = query.order('created_at', { ascending: false })
+          break
+        case 'top':
+          query = query.order('upvotes', { ascending: false })
+          break
+        case 'controversial':
+          // Sort by ratio of upvotes to downvotes, controversial = close to 1:1
+          query = query.order('downvotes', { ascending: false })
+          break
+      }
+
+      query = query.range(offset, offset + limit - 1)
+
+      const { data: threads, error } = await query
 
       if (error) {
         return { threads: [], error: error.message }

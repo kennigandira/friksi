@@ -7,6 +7,7 @@ import { AuthProvider } from '@/hooks/use-auth'
 import './globals.css'
 import '@mantine/core/styles.css'
 import '@mantine/carousel/styles.css'
+import '@/styles/animations.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
