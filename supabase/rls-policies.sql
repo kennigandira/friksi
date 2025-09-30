@@ -2,6 +2,8 @@
 -- Comprehensive security policies for all tables
 
 -- ============================================================================
+-- NOTE: The migrations in migrations/00018_fix_rls_policies.sql contain
+-- the corrected and active RLS policies. This file is kept for reference.
 -- ENABLE RLS ON ALL TABLES
 -- ============================================================================
 
@@ -13,16 +15,16 @@ ALTER TABLE thread_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comment_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE badges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_badges ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_levels ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE moderators ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
-ALTER TABLE bot_flags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE content_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bot_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE voting_sessions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE voting_options ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_votes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE voting_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE session_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE moderator_elections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE category_subscriptions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_activity ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
 -- HELPER FUNCTIONS FOR RLS

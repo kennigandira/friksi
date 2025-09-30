@@ -790,6 +790,17 @@ INSERT INTO spam_patterns (pattern_name, pattern_type, pattern_regex, weight) VA
     ('All Caps', 'content', '^[A-Z\\s]{20,}$', 1.2);
 
 -- ============================================
+-- SYSTEM TABLES
+-- ============================================
+
+-- Schema version tracking (for migration management)
+CREATE TABLE schema_migrations (
+    version INTEGER PRIMARY KEY,
+    description TEXT,
+    applied_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================================
 -- MAINTENANCE QUERIES
 -- ============================================
 
