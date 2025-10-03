@@ -193,7 +193,7 @@ export function CommentSection({ threadId }: CommentSectionProps) {
               </Badge>
             )}
             <Text size="xs" c="dimmed">
-              {new Date(comment.created_at).toLocaleDateString()}
+              {comment.created_at ? new Date(comment.created_at).toLocaleDateString() : ''}
             </Text>
             {comment.edited_at && (
               <Text size="xs" c="dimmed" fs="italic">
@@ -216,7 +216,7 @@ export function CommentSection({ threadId }: CommentSectionProps) {
                 <ActionIcon variant="subtle" size="sm">
                   <IconArrowUp size={12} />
                 </ActionIcon>
-                <Text size="sm">{comment.upvotes - comment.downvotes}</Text>
+                <Text size="sm">{(comment.upvotes || 0) - (comment.downvotes || 0)}</Text>
                 <ActionIcon variant="subtle" size="sm">
                   <IconArrowDown size={12} />
                 </ActionIcon>
@@ -267,7 +267,7 @@ export function CommentSection({ threadId }: CommentSectionProps) {
 
         {comment.replies && comment.replies.length > 0 && (
           <>
-            {comment.replies.map((reply) => renderComment(reply, depth + 1))}
+            {comment.replies.map((reply: NestedComment) => renderComment(reply, depth + 1))}
           </>
         )}
 

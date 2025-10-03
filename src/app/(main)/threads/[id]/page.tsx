@@ -1,3 +1,5 @@
+'use client'
+
 import { Container, Grid } from '@mantine/core'
 import { ThreadDetail } from '@/components/threads/ThreadDetail'
 import { VotePanel } from '@/components/threads/VotePanel'

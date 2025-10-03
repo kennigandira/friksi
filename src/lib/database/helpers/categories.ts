@@ -1,6 +1,7 @@
 import { getBrowserSupabaseClient } from '../lib/browser'
 import { createServerSupabaseClient } from '../lib/server'
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database.types'
+import { extendedRpc } from '../types/database-extensions'
 
 export type Category = Tables<'categories'>
 export type CategoryInsert = TablesInsert<'categories'>
@@ -171,6 +172,7 @@ export class CategoryHelpers {
     options?: {
       notificationEnabled?: boolean
       useServerClient?: boolean
+      headers?: HeadersInit
     }
   ): Promise<{ subscription: CategorySubscription | null; error: string | null }> {
     try {
@@ -197,7 +199,7 @@ export class CategoryHelpers {
       }
 
       // Update subscriber count
-      await supabase.rpc('increment_category_subscribers', {
+      await extendedRpc(supabase).increment_category_subscribers({
         category_id: categoryId,
         increment: 1
       })
@@ -219,6 +221,7 @@ export class CategoryHelpers {
     userId: string,
     options?: {
       useServerClient?: boolean
+      headers?: HeadersInit
     }
   ): Promise<{ success: boolean; error: string | null }> {
     try {
@@ -237,7 +240,7 @@ export class CategoryHelpers {
       }
 
       // Update subscriber count
-      await supabase.rpc('increment_category_subscribers', {
+      await extendedRpc(supabase).increment_category_subscribers({
         category_id: categoryId,
         increment: -1
       })
@@ -260,6 +263,7 @@ export class CategoryHelpers {
     currentlySubscribed: boolean,
     options?: {
       useServerClient?: boolean
+      headers?: HeadersInit
     }
   ): Promise<{ success: boolean; newStatus: boolean; error: string | null }> {
     if (currentlySubscribed) {

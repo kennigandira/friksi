@@ -17,10 +17,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
-          extensions?: Json
           operationName?: string
           query?: string
           variables?: Json
+          extensions?: Json
         }
         Returns: Json
       }
@@ -441,6 +441,7 @@ export type Database = {
           updated_at: string | null
           upvotes: number | null
           user_id: string | null
+          wilson_score: number | null
         }
         Insert: {
           content: string
@@ -461,6 +462,7 @@ export type Database = {
           updated_at?: string | null
           upvotes?: number | null
           user_id?: string | null
+          wilson_score?: number | null
         }
         Update: {
           content?: string
@@ -481,6 +483,7 @@ export type Database = {
           updated_at?: string | null
           upvotes?: number | null
           user_id?: string | null
+          wilson_score?: number | null
         }
         Relationships: [
           {
@@ -1179,6 +1182,7 @@ export type Database = {
           upvotes: number | null
           user_id: string | null
           view_count: number | null
+          wilson_score: number | null
         }
         Insert: {
           category_id: string
@@ -1206,6 +1210,7 @@ export type Database = {
           upvotes?: number | null
           user_id?: string | null
           view_count?: number | null
+          wilson_score?: number | null
         }
         Update: {
           category_id?: string
@@ -1233,6 +1238,7 @@ export type Database = {
           upvotes?: number | null
           user_id?: string | null
           view_count?: number | null
+          wilson_score?: number | null
         }
         Relationships: [
           {
@@ -1706,175 +1712,93 @@ export type Database = {
       }
     }
     Functions: {
-      _ltree_compress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      _ltree_gist_options: {
-        Args: { "": unknown }
-        Returns: undefined
-      }
       archive_old_notifications: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
       award_xp: {
         Args: {
-          action_type: string
-          reference_content_id?: string
-          reference_content_type?: string
-          target_user_id: string
+          p_user_id: string
+          p_action: string
+          p_amount?: number
         }
         Returns: undefined
       }
       calculate_hot_score: {
-        Args:
-          | { created_at: string; downvotes: number; upvotes: number }
-          | { created_at: string; downvotes: number; upvotes: number }
+        Args: {
+          upvotes: number
+          downvotes: number
+          created_at: string
+        }
         Returns: number
       }
       calculate_user_level: {
-        Args: { xp_amount: number }
+        Args: {
+          xp: number
+        }
         Returns: number
       }
       calculate_wilson_score: {
-        Args: { confidence?: number; downvotes: number; upvotes: number }
+        Args: {
+          upvotes: number
+          downvotes: number
+        }
         Returns: number
       }
       check_bot_criteria: {
-        Args: { target_user_id: string }
-        Returns: number
+        Args: {
+          p_user_id: string
+        }
+        Returns: boolean
       }
       cleanup_expired_sessions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
       evaluate_bot_status: {
-        Args: { user_id_param: string }
-        Returns: {
-          bot_score: number
-          is_bot: boolean
-          strikes: number
-        }[]
+        Args: {
+          p_user_id: string
+        }
+        Returns: undefined
       }
       generate_comment_path: {
-        Args: { parent_comment_id?: string }
+        Args: {
+          p_parent_id: string
+        }
         Returns: unknown
       }
       get_category_path: {
-        Args: { category_id: string }
-        Returns: string
+        Args: {
+          p_category_id: string
+        }
+        Returns: unknown
       }
       get_thread_stats: {
-        Args: { thread_uuid: string }
-        Returns: Json
+        Args: {
+          p_thread_id: string
+        }
+        Returns: {
+          comment_count: number
+          unique_commenters: number
+          total_votes: number
+          wilson_score: number
+        }[]
       }
       get_user_stats: {
-        Args: { user_uuid: string }
-        Returns: Json
+        Args: {
+          p_user_id: string
+        }
+        Returns: {
+          thread_count: number
+          comment_count: number
+          total_upvotes: number
+          total_downvotes: number
+        }[]
       }
       get_xp_for_action: {
-        Args: { action_type: string }
-        Returns: number
-      }
-      gtrgm_compress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_decompress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_options: {
-        Args: { "": unknown }
-        Returns: undefined
-      }
-      gtrgm_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      lca: {
-        Args: { "": unknown[] }
-        Returns: unknown
-      }
-      lquery_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      lquery_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      lquery_recv: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      lquery_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      ltree_compress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ltree_decompress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ltree_gist_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ltree_gist_options: {
-        Args: { "": unknown }
-        Returns: undefined
-      }
-      ltree_gist_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ltree_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ltree_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ltree_recv: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ltree_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      ltree2text: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      ltxtq_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ltxtq_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ltxtq_recv: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ltxtq_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      nlevel: {
-        Args: { "": unknown }
+        Args: {
+          action_type: string
+        }
         Returns: number
       }
       recalculate_trust_scores: {
@@ -1883,41 +1807,19 @@ export type Database = {
       }
       search_threads: {
         Args: {
-          category_filter?: string
-          limit_count?: number
-          offset_count?: number
           search_query: string
+          p_category_id?: string
+          limit_count?: number
         }
         Returns: {
-          author_username: string
-          category_name: string
-          content: string
-          created_at: string
-          hot_score: number
           id: string
-          rank: number
           title: string
+          content: string
+          user_id: string
+          category_id: string
+          created_at: string
+          relevance: number
         }[]
-      }
-      set_limit: {
-        Args: { "": number }
-        Returns: number
-      }
-      show_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      show_trgm: {
-        Args: { "": string }
-        Returns: string[]
-      }
-      text2ltree: {
-        Args: { "": string }
-        Returns: unknown
-      }
-      update_bot_status: {
-        Args: { target_user_id: string }
-        Returns: undefined
       }
       update_hot_threads: {
         Args: Record<PropertyKey, never>
@@ -1933,33 +1835,27 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  PublicTableNameOrOptions extends
+    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+        PublicSchema["Views"])
+    ? (PublicSchema["Tables"] &
+        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -1967,24 +1863,20 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -1992,24 +1884,20 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -2017,64 +1905,36 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  PublicEnumNameOrOptions extends
+    | keyof PublicSchema["Enums"]
+    | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
+    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof Database
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
-export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
-  public: {
-    Enums: {},
-  },
-} as const
-
-// ============================================
-// Custom Type Exports
-// ============================================
-
-// User level type (1-5)
+// Custom type definitions for enums that exist in the database
 export type UserLevel = 1 | 2 | 3 | 4 | 5
-
-// Account status type
-export type AccountStatus = 'active' | 'restricted' | 'shadowbanned' | 'banned'
-
-// Vote type
+export type AccountStatus = 'active' | 'suspended' | 'banned' | 'deleted'
 export type VoteType = 'upvote' | 'downvote'
-
-// Content type for votes/reports
 export type ContentType = 'thread' | 'comment'
-
-// Bot classification
-export type BotClassification = 'human' | 'suspicious' | 'bot'
 

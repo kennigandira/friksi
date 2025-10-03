@@ -1,26 +1,22 @@
-import {
-  Container,
-  Title,
-  SimpleGrid,
-  Alert,
-  Text,
-} from '@mantine/core'
-import { IconInfoCircle } from '@tabler/icons-react'
 import { CategoryCard } from '@/components/threads/CategoryCard'
 import { CategoryHelpers } from '@/lib/database/helpers/categories'
 import { createServerSupabaseClient } from '@/lib/database/lib/server'
+import { Alert, Container, SimpleGrid, Text, Title } from '@mantine/core'
+import { IconInfoCircle } from '@tabler/icons-react'
 
 export const revalidate = 60 // Revalidate every 60 seconds
 
 export default async function CategoriesPage() {
   // Get the current user (if authenticated) using our existing server client
   const supabase = createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   // Fetch categories from database with subscription status
   const { categories, error } = await CategoryHelpers.getCategories({
     useServerClient: true,
-    userId: user?.id,
+    ...(user?.id && { userId: user.id }),
     parentId: null, // Only get top-level categories
   })
 
@@ -30,9 +26,15 @@ export default async function CategoriesPage() {
         <Title order={1} mb="xl">
           Discussion Categories
         </Title>
-        <Alert icon={<IconInfoCircle size={16} />} color="red" title="Error loading categories">
+        <Alert
+          icon={<IconInfoCircle size={16} />}
+          color="red"
+          title="Error loading categories"
+        >
           <Text>Unable to load categories. Please try again later.</Text>
-          <Text size="sm" c="dimmed" mt="xs">{error}</Text>
+          <Text size="sm" c="dimmed" mt="xs">
+            {error}
+          </Text>
         </Alert>
       </Container>
     )
@@ -59,7 +61,7 @@ export default async function CategoriesPage() {
       </Title>
 
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-        {categories.map((category) => (
+        {categories.map(category => (
           <CategoryCard
             key={category.id}
             id={category.id}
@@ -71,7 +73,7 @@ export default async function CategoriesPage() {
             isSubscribed={category.is_subscribed || false}
             color={category.color}
             iconUrl={category.icon_url}
-            userId={user?.id}
+            userId={user?.id || ''}
           />
         ))}
       </SimpleGrid>

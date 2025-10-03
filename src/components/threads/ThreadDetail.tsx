@@ -3,14 +3,23 @@
 import { useEffect, useState } from 'react'
 import { Card, Text, Group, Badge, Avatar, Title, Stack, Skeleton, Alert } from '@mantine/core'
 import { IconAlertCircle } from '@tabler/icons-react'
-import { ThreadHelpers, type Thread } from '@/lib/database'
+import { ThreadHelpers, Thread } from '@/lib/database'
 import { logger } from '@/lib/logger'
 
 interface ThreadDetailProps {
   threadId: string
 }
 
-interface ThreadWithRelations extends Thread {
+interface ThreadWithRelations {
+  id: string
+  title: string
+  content: string
+  created_at: string
+  edited_at: string | null
+  view_count: number
+  comment_count: number
+  upvotes: number
+  downvotes: number
   users?: {
     username: string
     avatar_url: string | null

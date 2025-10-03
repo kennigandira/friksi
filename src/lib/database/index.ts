@@ -36,3 +36,7 @@ export {
   UserHelpers,
   VoteHelpers,
 } from './helpers'
+
+// Re-export commonly used types from helpers
+export type { Thread, ThreadInsert, ThreadUpdate } from './helpers/threads'
+export type { NestedComment, CommentWithUser } from './helpers/comments'

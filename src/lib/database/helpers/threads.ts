@@ -304,7 +304,7 @@ export class ThreadHelpers {
         return { threads: [], error: error.message }
       }
 
-      return { threads: (threads as SearchThreadResult[]) || [], error: null }
+      return { threads: (threads as unknown as SearchThreadResult[]) || [], error: null }
     } catch (error) {
       return {
         threads: [],

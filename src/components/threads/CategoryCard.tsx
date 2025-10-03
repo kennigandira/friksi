@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import { CategoryHelpers } from '@/lib/database/helpers/categories'
 import { useRouter } from 'next/navigation'
+import { generateCSRFToken } from '@/lib/security/csrf'
 
 interface CategoryCardProps {
   id: string
@@ -52,6 +53,14 @@ export function CategoryCard({
 
     setIsLoading(true)
 
+    // Generate CSRF token for protection
+    const csrfToken = await generateCSRFToken()
+    if (!csrfToken) {
+      console.error('Failed to generate CSRF token')
+      setIsLoading(false)
+      return
+    }
+
     // Optimistic update
     const newStatus = !isSubscribed
     setIsSubscribed(newStatus)
@@ -62,7 +71,12 @@ export function CategoryCard({
         id,
         userId,
         isSubscribed,
-        { useServerClient: false }
+        {
+          useServerClient: false,
+          headers: {
+            'X-CSRF-Token': csrfToken
+          }
+        }
       )
 
       if (!success || error) {
