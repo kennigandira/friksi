@@ -73,7 +73,7 @@ export function Navigation() {
             />
           ))}
 
-          {user.level >= 3 && (
+          {(user.level ?? 1) >= 3 && (
             <NavLink
               component={Link}
               href="/moderate"

@@ -4,10 +4,12 @@ import type {
 } from '@supabase/supabase-js'
 import type { Database, Tables } from '../types/database.types'
 import { getBrowserSupabaseClient } from './browser'
+import { TableRow } from './typed-client'
 
 export type ThreadUpdate = RealtimePostgresChangesPayload<Tables<'threads'>>
 export type CommentUpdate = RealtimePostgresChangesPayload<Tables<'comments'>>
-export type VoteUpdate = RealtimePostgresChangesPayload<Tables<'votes'>>
+export type ThreadVoteUpdate = RealtimePostgresChangesPayload<Tables<'thread_votes'>>
+export type CommentVoteUpdate = RealtimePostgresChangesPayload<Tables<'comment_votes'>>
 
 /**
  * Real-time subscription utilities for Friksi platform
@@ -24,8 +26,8 @@ export class FriksiRealtime {
       onThreadUpdate?: (payload: ThreadUpdate) => void
       onCommentInsert?: (payload: CommentUpdate) => void
       onCommentUpdate?: (payload: CommentUpdate) => void
-      onVoteInsert?: (payload: VoteUpdate) => void
-      onVoteUpdate?: (payload: VoteUpdate) => void
+      onVoteInsert?: (payload: ThreadVoteUpdate) => void
+      onVoteUpdate?: (payload: ThreadVoteUpdate) => void
     }
   ): RealtimeChannel {
     const supabase = getBrowserSupabaseClient()
@@ -71,20 +73,20 @@ export class FriksiRealtime {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'votes',
-          filter: `content_type=eq.thread.and.content_id=eq.${threadId}`,
+          table: 'thread_votes',
+          filter: `thread_id=eq.${threadId}`,
         },
-        payload => callbacks.onVoteInsert?.(payload as VoteUpdate)
+        payload => callbacks.onVoteInsert?.(payload as ThreadVoteUpdate)
       )
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'votes',
-          filter: `content_type=eq.thread.and.content_id=eq.${threadId}`,
+          table: 'thread_votes',
+          filter: `thread_id=eq.${threadId}`,
         },
-        payload => callbacks.onVoteUpdate?.(payload as VoteUpdate)
+        payload => callbacks.onVoteUpdate?.(payload as ThreadVoteUpdate)
       )
       .subscribe()
 
@@ -146,10 +148,10 @@ export class FriksiRealtime {
         payload: RealtimePostgresChangesPayload<Tables<'voting_sessions'>>
       ) => void
       onVoteInsert?: (
-        payload: RealtimePostgresChangesPayload<Tables<'user_votes'>>
+        payload: RealtimePostgresChangesPayload<Tables<'session_votes'>>
       ) => void
       onOptionUpdate?: (
-        payload: RealtimePostgresChangesPayload<Tables<'voting_options'>>
+        payload: RealtimePostgresChangesPayload<Tables<'voting_entries'>>
       ) => void
     }
   ): RealtimeChannel {
@@ -169,27 +171,33 @@ export class FriksiRealtime {
           table: 'voting_sessions',
           filter: `id=eq.${sessionId}`,
         },
-        payload => callbacks.onSessionUpdate?.(payload as any)
+        payload => callbacks.onSessionUpdate?.(
+          payload as RealtimePostgresChangesPayload<TableRow<'voting_sessions'>>
+        )
       )
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'user_votes',
+          table: 'session_votes',
           filter: `session_id=eq.${sessionId}`,
         },
-        payload => callbacks.onVoteInsert?.(payload as any)
+        payload => callbacks.onVoteInsert?.(
+          payload as RealtimePostgresChangesPayload<Tables<'session_votes'>>
+        )
       )
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'voting_options',
+          table: 'voting_entries',
           filter: `session_id=eq.${sessionId}`,
         },
-        payload => callbacks.onOptionUpdate?.(payload as any)
+        payload => callbacks.onOptionUpdate?.(
+          payload as RealtimePostgresChangesPayload<Tables<'voting_entries'>>
+        )
       )
       .subscribe()
 
@@ -317,7 +325,9 @@ export class FriksiRealtime {
    */
   static getConnectionStatus(): string {
     const supabase = getBrowserSupabaseClient()
-    return (supabase.realtime as any).connection?.state || 'unknown'
+    // Access realtime connection state safely
+    const realtime = supabase.realtime as { connection?: { state?: string } }
+    return realtime.connection?.state || 'unknown'
   }
 
   /**

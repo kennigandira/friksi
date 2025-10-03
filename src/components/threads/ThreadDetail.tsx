@@ -33,7 +33,7 @@ export function ThreadDetail({ threadId }: ThreadDetailProps) {
         <Group justify="space-between">
           <Group>
             <Avatar size="md" src={thread.author.avatar_url}>
-              {thread.author.username[0].toUpperCase()}
+              {thread.author.username[0]?.toUpperCase()}
             </Avatar>
             <div>
               <Text fw={500}>{thread.author.username}</Text>

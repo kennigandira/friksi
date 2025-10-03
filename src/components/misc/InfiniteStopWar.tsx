@@ -16,7 +16,8 @@ export default function InfiniteStopWar() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {
-        if (entries[0].isIntersecting) {
+        const entry = entries[0]
+        if (entry?.isIntersecting) {
           setPages(prevPages => prevPages + 1)
         }
       },

@@ -24,14 +24,14 @@ INSERT INTO categories (name, slug, description, color, is_default, is_active) V
 -- SAMPLE USERS
 -- ============================================================================
 
--- Insert sample users
-INSERT INTO users (id, username, level, xp, trust_score)
+-- Insert sample users (email is required by NOT NULL constraint)
+INSERT INTO users (id, username, email, level, xp, trust_score)
 VALUES
-    ('00000000-0000-0000-0000-000000000001'::uuid, 'admin', 5, 10000, 100.00),
-    ('00000000-0000-0000-0000-000000000002'::uuid, 'citymod', 5, 7500, 95.00),
-    ('00000000-0000-0000-0000-000000000003'::uuid, 'activecitizen', 4, 3000, 85.00),
-    ('00000000-0000-0000-0000-000000000004'::uuid, 'newcomer', 2, 150, 55.00),
-    ('00000000-0000-0000-0000-000000000005'::uuid, 'quietobserver', 1, 25, 50.00)
+    ('00000000-0000-0000-0000-000000000001'::uuid, 'admin', 'admin@friksi.local', 5, 10000, 100.00),
+    ('00000000-0000-0000-0000-000000000002'::uuid, 'citymod', 'citymod@friksi.local', 5, 7500, 95.00),
+    ('00000000-0000-0000-0000-000000000003'::uuid, 'activecitizen', 'activecitizen@friksi.local', 4, 3000, 85.00),
+    ('00000000-0000-0000-0000-000000000004'::uuid, 'newcomer', 'newcomer@friksi.local', 2, 150, 55.00),
+    ('00000000-0000-0000-0000-000000000005'::uuid, 'quietobserver', 'quietobserver@friksi.local', 1, 25, 50.00)
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================

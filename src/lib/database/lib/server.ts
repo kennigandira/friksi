@@ -11,9 +11,9 @@ export const createServerSupabaseClient = (options?: {
   supabaseServiceKey?: string
 }) => {
   const supabaseUrl =
-    options?.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL
+    options?.supabaseUrl || process.env['NEXT_PUBLIC_SUPABASE_URL']
   const supabaseServiceKey =
-    options?.supabaseServiceKey || process.env.SUPABASE_SERVICE_ROLE_KEY
+    options?.supabaseServiceKey || process.env['SUPABASE_SERVICE_ROLE_KEY']
 
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error(
@@ -46,9 +46,9 @@ export const createServerClientWithAuth = (
   }
 ) => {
   const supabaseUrl =
-    options?.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL
+    options?.supabaseUrl || process.env['NEXT_PUBLIC_SUPABASE_URL']
   const supabaseAnonKey =
-    options?.supabaseAnonKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    options?.supabaseAnonKey || process.env['NEXT_PUBLIC_SUPABASE_ANON_KEY']
 
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error(

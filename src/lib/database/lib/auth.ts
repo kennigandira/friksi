@@ -7,6 +7,9 @@ import type {
 } from '../types/database.types'
 import { getBrowserSupabaseClient } from './browser'
 import { createServerClientWithAuth } from './server'
+import { getTypedClient, TableInsert, TableUpdate } from './typed-client'
+import { logger } from '@/lib/logger'
+import { env } from '@/lib/env'
 
 export type FriksiUser = Tables<'users'>
 
@@ -36,21 +39,10 @@ export class FriksiAuth {
       },
     })
 
-    if (data.user && !error) {
-      // Create user profile in our users table
-      const { error: profileError } = await (supabase as any).from('users').insert({
-        id: data.user.id,
-        username: credentials.username,
-        email: credentials.email,
-        level: 1,
-        xp: 0,
-        trust_score: 50.0,
-      })
-
-      if (profileError) {
-        console.error('Error creating user profile:', profileError)
-      }
-    }
+    // Profile creation is now handled automatically by database trigger
+    // See: supabase/migrations/00019_secure_profile_creation.sql
+    // The trigger ensures secure defaults (level=1, xp=0, trust_score=50.0)
+    // and prevents client-side manipulation of these values
 
     return { user: data.user, error }
   }
@@ -122,7 +114,7 @@ export class FriksiAuth {
       .single()
 
     if (error) {
-      console.error('Error fetching user profile:', error)
+      logger.error('Error fetching user profile:', error)
       return null
     }
 
@@ -142,9 +134,12 @@ export class FriksiAuth {
     const user = await this.getCurrentUser()
     if (!user) return { success: false, error: 'Not authenticated' }
 
-    const { error } = await (supabase as any)
+    const typedClient = getTypedClient(supabase)
+    const updateData: TableUpdate<'users'> = updates
+
+    const { error } = await typedClient
       .from('users')
-      .update(updates)
+      .update(updateData)
       .eq('id', user.id)
 
     if (error) {
@@ -159,7 +154,7 @@ export class FriksiAuth {
    */
   static async hasLevel(requiredLevel: UserLevel): Promise<boolean> {
     const profile = await this.getCurrentUserProfile()
-    if (!profile) return false
+    if (!profile || profile.level === null) return false
 
     return profile.level >= requiredLevel
   }
@@ -199,13 +194,14 @@ export class FriksiAuth {
     const profile = await this.getCurrentUserProfile()
     if (!profile) return { isRestricted: true, accountStatus: null }
 
+    const accountStatus = (profile.account_status || 'active') as AccountStatus
     const isRestricted = ['restricted', 'shadowbanned', 'banned'].includes(
-      profile.account_status
+      accountStatus
     )
 
     return {
       isRestricted,
-      accountStatus: profile.account_status,
+      accountStatus,
     }
   }
 
@@ -229,7 +225,7 @@ export class FriksiAuth {
     const supabase = getBrowserSupabaseClient()
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+      redirectTo: `${env.app.url}/auth/reset-password`,
     })
 
     return { error }
@@ -277,7 +273,7 @@ export class ServerAuth {
 
       return data
     } catch (error) {
-      console.error('Error getting user from token:', error)
+      logger.error('Error getting user from token:', error)
       return null
     }
   }
@@ -290,7 +286,7 @@ export class ServerAuth {
     requiredLevel: UserLevel
   ): Promise<boolean> {
     const user = await this.getUserFromToken(token)
-    if (!user) return false
+    if (!user || user.level === null) return false
 
     return user.level >= requiredLevel
   }

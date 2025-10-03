@@ -5,6 +5,7 @@ import type {
 } from '../types/database.types'
 import { createServerSupabaseClient } from '../lib/server'
 import { getBrowserSupabaseClient } from '../lib/browser'
+import { getTypedClient, TableInsert, TableUpdate } from '../lib/typed-client'
 
 export type Comment = Tables<'comments'>
 export type CommentInsert = TablesInsert<'comments'>
@@ -14,8 +15,7 @@ export interface CommentWithUser extends Comment {
   users: {
     username: string
     avatar_url: string | null
-    level: number
-    is_bot: boolean
+    level: number | null
   } | null
 }
 
@@ -68,14 +68,16 @@ export class CommentHelpers {
       }
 
       // Insert comment (path will be set by trigger)
-      const { data: comment, error } = await (supabase
+      const typedClient = getTypedClient(supabase)
+      const commentData: TableInsert<'comments'> = {
+        ...data,
+        path: '', // Will be set by database trigger
+      }
+      const { data: comment, error } = await typedClient
         .from('comments')
-        .insert({
-          ...data,
-          wilson_score: 0,
-        } as any)
+        .insert(commentData)
         .select()
-        .single())
+        .single()
 
       if (error) {
         return { comment: null, error: error.message }
@@ -116,7 +118,7 @@ export class CommentHelpers {
         .select(
           `
           *,
-          users!comments_user_id_fkey(username, avatar_url, level, is_bot)
+          users!comments_user_id_fkey(username, avatar_url, level)
         `
         )
         .eq('thread_id', threadId)
@@ -188,7 +190,7 @@ export class CommentHelpers {
         .select(
           `
           *,
-          users!comments_user_id_fkey(username, avatar_url, level, is_bot)
+          users!comments_user_id_fkey(username, avatar_url, level)
         `
         )
         .eq('id', commentId)
@@ -204,7 +206,7 @@ export class CommentHelpers {
         .select(
           `
           *,
-          users!comments_user_id_fkey(username, avatar_url, level, is_bot)
+          users!comments_user_id_fkey(username, avatar_url, level)
         `
         )
         .textSearch('path', `${mainComment.path}.*{1,${maxDepth}}`, {
@@ -268,22 +270,17 @@ export class CommentHelpers {
           .eq('id', commentId)
           .single() as { data: { upvotes: number; downvotes: number } | null }
 
-        if (currentComment) {
-          const upvotes = updates.upvotes ?? currentComment.upvotes
-          const downvotes = updates.downvotes ?? currentComment.downvotes
-          updateData.wilson_score = this.calculateWilsonScore(
-            upvotes,
-            downvotes
-          )
-        }
+        // wilson_score is computed by the database based on upvotes/downvotes
+        // No need to manually update it
       }
 
-      const { data: comment, error } = await ((supabase as any)
+      const typedClient = getTypedClient(supabase)
+      const { data: comment, error } = await typedClient
         .from('comments')
         .update(updateData)
         .eq('id', commentId)
         .select()
-        .single())
+        .single()
 
       if (error) {
         return { comment: null, error: error.message }
@@ -320,7 +317,8 @@ export class CommentHelpers {
         return { success: !error, error: error?.message || null }
       } else {
         // Soft delete
-        const { error } = await (supabase as any)
+        const typedClient = getTypedClient(supabase)
+        const { error } = await typedClient
           .from('comments')
           .update({
             is_deleted: true,
@@ -372,7 +370,7 @@ export class CommentHelpers {
         .select(
           `
           *,
-          users!comments_user_id_fkey(username, avatar_url, level, is_bot)
+          users!comments_user_id_fkey(username, avatar_url, level)
         `
         )
         .in('id', pathParts)
@@ -429,7 +427,11 @@ export class CommentHelpers {
     const sortReplies = (comments: NestedComment[]) => {
       comments.forEach(comment => {
         if (comment.replies && comment.replies.length > 0) {
-          comment.replies.sort((a, b) => b.wilson_score - a.wilson_score)
+          comment.replies.sort((a, b) => {
+            const scoreA = (a as any).wilson_score ?? 0
+            const scoreB = (b as any).wilson_score ?? 0
+            return scoreB - scoreA
+          })
           sortReplies(comment.replies)
         }
       })

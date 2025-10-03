@@ -180,29 +180,27 @@ BEGIN
       ELSE 0
     END
   INTO criteria_met
-  FROM users
-  WHERE id = target_user_id;
+  FROM bot_detection
+  WHERE user_id = target_user_id;
 
   -- Criteria 2: 3.5% of active users report as bot
   SELECT COUNT(*) INTO active_users
   FROM users
-  WHERE is_active = TRUE AND last_active_at > NOW() - INTERVAL '30 days';
+  WHERE account_status = 'active' AND last_active > NOW() - INTERVAL '30 days';
 
-  SELECT COUNT(*) INTO moderator_reports
-  FROM bot_flags bf
-  WHERE bf.user_id = target_user_id
-  AND bf.criteria = 2;
+  SELECT COUNT(DISTINCT mbr.moderator_id) INTO moderator_reports
+  FROM moderator_bot_reports mbr
+  WHERE mbr.reported_user_id = target_user_id;
 
   IF active_users > 0 AND (CAST(moderator_reports AS NUMERIC) / active_users) >= 0.035 THEN
     criteria_met := criteria_met + 1;
   END IF;
 
   -- Criteria 3: 3 moderators report as bot
-  SELECT COUNT(*) INTO moderator_reports
-  FROM bot_flags bf
-  JOIN moderators m ON m.user_id = bf.flagged_by
-  WHERE bf.user_id = target_user_id
-  AND bf.criteria = 3
+  SELECT COUNT(DISTINCT mbr.moderator_id) INTO moderator_reports
+  FROM moderator_bot_reports mbr
+  JOIN moderators m ON m.user_id = mbr.moderator_id
+  WHERE mbr.reported_user_id = target_user_id
   AND m.is_active = TRUE;
 
   IF moderator_reports >= 3 THEN
@@ -221,12 +219,14 @@ DECLARE
 BEGIN
   criteria_count := check_bot_criteria(target_user_id);
 
-  -- Update bot status and flag count
-  UPDATE users
+  -- Update bot status and flag count in bot_detection table
+  UPDATE bot_detection
   SET
     is_bot = (criteria_count >= 2),
-    bot_flags = criteria_count
-  WHERE id = target_user_id;
+    bot_score = criteria_count * 33.33, -- Scale to 0-100
+    last_evaluated = NOW(),
+    flagged_at = CASE WHEN (criteria_count >= 2) AND flagged_at IS NULL THEN NOW() ELSE flagged_at END
+  WHERE user_id = target_user_id;
 END;
 $$ LANGUAGE plpgsql;
 

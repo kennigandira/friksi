@@ -7,6 +7,8 @@ import type {
 } from '../types/database.types'
 import { createServerSupabaseClient } from '../lib/server'
 import { getBrowserSupabaseClient } from '../lib/browser'
+import { getTypedClient, TableInsert, TableUpdate } from '../lib/typed-client'
+import { logger } from '@/lib/logger'
 
 export type User = Tables<'users'>
 export type UserInsert = TablesInsert<'users'>
@@ -191,7 +193,8 @@ export class UserHelpers {
         updated_at: new Date().toISOString(),
       }
 
-      const { data: user, error } = await (supabase as any)
+      const typedClient = getTypedClient(supabase)
+      const { data: user, error } = await typedClient
         .from('users')
         .update(updateData)
         .eq('id', userId)
@@ -242,8 +245,10 @@ export class UserHelpers {
       const newLevel = this.calculateLevel(newXP)
       const levelChanged = newLevel !== user.level
 
+      const typedClient = getTypedClient(supabase)
+
       // Update user XP and level
-      const { error: updateError } = await (supabase as any)
+      const { error: updateError } = await typedClient
         .from('users')
         .update({
           xp: newXP,
@@ -258,34 +263,41 @@ export class UserHelpers {
       }
 
       // Log XP transaction
-      const { error: transactionError } = await (supabase as any)
+      const xpTransactionData: TableInsert<'xp_transactions'> = {
+        user_id: userId,
+        amount,
+        reason,
+        source_type: sourceType || 'manual',
+      }
+      if (sourceId) {
+        xpTransactionData.source_id = sourceId
+      }
+      const { error: transactionError } = await typedClient
         .from('xp_transactions')
-        .insert({
-          user_id: userId,
-          amount,
-          reason,
-          source_type: sourceType || 'manual',
-          source_id: sourceId,
-        })
+        .insert(xpTransactionData)
 
       if (transactionError) {
-        console.error('Failed to log XP transaction:', transactionError)
+        logger.error('Failed to log XP transaction:', transactionError)
       }
 
       // Log level up activity
       if (levelChanged) {
-        await (supabase as any).from('user_activities').insert({
+        // Note: user_activity table needs to be added to type generation
+        await typedClient.from('user_activity' as any).insert({
           user_id: userId,
           activity_type: 'level_up',
           metadata: { old_level: user.level, new_level: newLevel },
-        })
+        } as any)
       }
 
-      return {
+      const result: { success: boolean; newLevel?: number; error: string | null } = {
         success: true,
-        newLevel: levelChanged ? newLevel : undefined,
         error: null,
       }
+      if (levelChanged) {
+        result.newLevel = newLevel
+      }
+      return result
     } catch (error) {
       return {
         success: false,
@@ -427,7 +439,7 @@ export class UserHelpers {
       activityType?: string
     } = {}
   ): Promise<{
-    activities: Tables<'user_activities'>[]
+    activities: Tables<'user_activity'>[]
     error: string | null
   }> {
     try {
@@ -435,7 +447,7 @@ export class UserHelpers {
       const { limit = 50, offset = 0 } = options
 
       let query = supabase
-        .from('user_activities')
+        .from('user_activity')
         .select('*')
         .eq('user_id', userId)
 
@@ -524,7 +536,8 @@ export class UserHelpers {
         ? createServerSupabaseClient()
         : getBrowserSupabaseClient()
 
-      const { error } = await (supabase as any)
+      const typedClient = getTypedClient(supabase)
+      const { error } = await typedClient
         .from('users')
         .update({
           last_active: new Date().toISOString(),
@@ -556,7 +569,9 @@ export class UserHelpers {
         ? createServerSupabaseClient()
         : getBrowserSupabaseClient()
 
-      const { error: updateError } = await (supabase as any)
+      const typedClient = getTypedClient(supabase)
+
+      const { error: updateError } = await typedClient
         .from('users')
         .update({
           account_status: action === 'activate' ? 'active' : action,
@@ -569,8 +584,9 @@ export class UserHelpers {
       }
 
       // Log moderation action
-      const { error: logError } = await (supabase as any)
-        .from('user_activities')
+      // Note: user_activity table needs to be added to type generation
+      const { error: logError } = await typedClient
+        .from('user_activity' as any)
         .insert({
           user_id: userId,
           activity_type: 'level_up', // We'll extend this enum
@@ -579,10 +595,10 @@ export class UserHelpers {
             moderator_id: moderatorId,
             reason: reason || null,
           },
-        })
+        } as any)
 
       if (logError) {
-        console.error('Failed to log moderation action:', logError)
+        logger.error('Failed to log moderation action:', logError)
       }
 
       return { success: true, error: null }

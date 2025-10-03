@@ -41,7 +41,7 @@ export function AuthGuard({
   }
 
   // Check minimum level requirement
-  if (minLevel && user.level < minLevel) {
+  if (minLevel && (user.level ?? 1) < minLevel) {
     return (
       <Alert
         icon={<IconAlertCircle size={16} />}
@@ -56,7 +56,7 @@ export function AuthGuard({
   }
 
   // Check moderator requirement (level 4+ has moderation privileges)
-  if (requireModerator && user.level < 4) {
+  if (requireModerator && (user.level ?? 1) < 4) {
     return (
       <Alert
         icon={<IconAlertCircle size={16} />}
@@ -70,7 +70,7 @@ export function AuthGuard({
   }
 
   // Check admin requirement
-  if (requireAdmin && user.level < 5) {
+  if (requireAdmin && (user.level ?? 1) < 5) {
     return (
       <Alert
         icon={<IconAlertCircle size={16} />}

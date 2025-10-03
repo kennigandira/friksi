@@ -10,26 +10,9 @@
 -- DROP INCORRECT POLICIES (if they exist)
 -- ============================================
 
--- These policies reference non-existent or incorrectly named tables
-DROP POLICY IF EXISTS "Users can view user levels" ON user_levels;
-DROP POLICY IF EXISTS "Anyone can view user levels" ON user_levels;
-
-DROP POLICY IF EXISTS "Users can view own activities" ON user_activities;
-DROP POLICY IF EXISTS "Users can view own activity" ON user_activities;
-
-DROP POLICY IF EXISTS "Anyone can view voting options" ON voting_options;
-DROP POLICY IF EXISTS "Session creators can add options" ON voting_options;
-
-DROP POLICY IF EXISTS "Users can view own votes" ON user_votes;
-DROP POLICY IF EXISTS "Users can vote in sessions" ON user_votes;
-
-DROP POLICY IF EXISTS "Users can view own reports" ON reports;
-DROP POLICY IF EXISTS "Moderators can view reports" ON reports;
-DROP POLICY IF EXISTS "Level 3+ users can create reports" ON reports;
-DROP POLICY IF EXISTS "Moderators can update reports" ON reports;
-
-DROP POLICY IF EXISTS "Moderators can view bot flags" ON bot_flags;
-DROP POLICY IF EXISTS "Level 3+ users can create bot flags" ON bot_flags;
+-- Note: Removed DROP POLICY statements for non-existent tables (user_levels, user_activities, voting_options, user_votes, reports, bot_flags)
+-- These tables don't exist in the schema and cause migration errors
+-- The corrected policies for actual tables (user_activity, voting_entries, session_votes, content_reports) are handled below
 
 -- ============================================
 -- CREATE CORRECT POLICIES FOR EXISTING TABLES

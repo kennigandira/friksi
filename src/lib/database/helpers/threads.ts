@@ -6,10 +6,23 @@ import type {
   TablesUpdate,
   UserLevel,
 } from '../types/database.types'
+import { getTypedClient, TableInsert, TableUpdate } from '../lib/typed-client'
 
 export type Thread = Tables<'threads'>
 export type ThreadInsert = TablesInsert<'threads'>
 export type ThreadUpdate = TablesUpdate<'threads'>
+
+// RPC function return types
+export interface SearchThreadResult {
+  id: string
+  title: string
+  content: string
+  category_name: string
+  author_username: string
+  hot_score: number
+  created_at: string
+  rank: number
+}
 
 /**
  * Thread management utilities
@@ -30,14 +43,16 @@ export class ThreadHelpers {
       // Calculate initial hot score
       const hotScore = this.calculateHotScore(0, 0, new Date())
 
-      const { data: thread, error } = await (supabase as any)
+      const typedClient = getTypedClient(supabase)
+      const threadData: TableInsert<'threads'> = {
+        ...data,
+        hot_score: hotScore,
+        last_activity_at: new Date().toISOString(),
+      }
+
+      const { data: thread, error } = await typedClient
         .from('threads')
-        .insert({
-          ...data,
-          hot_score: hotScore,
-          wilson_score: 0,
-          last_activity_at: new Date().toISOString(),
-        })
+        .insert(threadData)
         .select()
         .single()
 
@@ -148,7 +163,8 @@ export class ThreadHelpers {
 
       // Increment view count if requested
       if (options.incrementViews && thread) {
-        await (supabase as any)
+        const typedClient = getTypedClient(supabase)
+        await typedClient
           .from('threads')
           .update({ view_count: thread.view_count + 1 })
           .eq('id', threadId)
@@ -188,7 +204,8 @@ export class ThreadHelpers {
         updateData.edited_at = new Date().toISOString()
       }
 
-      const { data: thread, error } = await (supabase as any)
+      const typedClient = getTypedClient(supabase)
+      const { data: thread, error } = await typedClient
         .from('threads')
         .update(updateData)
         .eq('id', threadId)
@@ -230,7 +247,8 @@ export class ThreadHelpers {
         return { success: !error, error: error?.message || null }
       } else {
         // Soft delete
-        const { error } = await (supabase as any)
+        const typedClient = getTypedClient(supabase)
+        const { error } = await typedClient
           .from('threads')
           .update({
             is_deleted: true,
@@ -258,23 +276,32 @@ export class ThreadHelpers {
       limit?: number
       offset?: number
     } = {}
-  ): Promise<{ threads: Thread[]; error: string | null }> {
+  ): Promise<{ threads: SearchThreadResult[]; error: string | null }> {
     try {
       const supabase = getBrowserSupabaseClient()
       const { limit = 20, offset = 0 } = options
 
-      const { data: threads, error } = await (supabase as any).rpc('search_threads', {
+      const typedClient = getTypedClient(supabase)
+      const params: {
+        search_query: string
+        category_filter?: string
+        limit_count: number
+        offset_count: number
+      } = {
         search_query: query,
-        category_filter: options.categoryId || null,
         limit_count: limit,
         offset_count: offset,
-      })
+      }
+      if (options.categoryId) {
+        params.category_filter = options.categoryId
+      }
+      const { data: threads, error } = await typedClient.rpc('search_threads', params)
 
       if (error) {
         return { threads: [], error: error.message }
       }
 
-      return { threads: threads || [], error: null }
+      return { threads: (threads as SearchThreadResult[]) || [], error: null }
     } catch (error) {
       return {
         threads: [],
@@ -408,7 +435,8 @@ export class ThreadHelpers {
           thread.downvotes
         )
 
-        const { error: updateError } = await (supabase as any)
+        const typedClient = getTypedClient(supabase)
+        const { error: updateError } = await typedClient
           .from('threads')
           .update({
             hot_score: hotScore,

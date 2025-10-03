@@ -19,14 +19,16 @@ DECLARE
     parent_depth INTEGER;
 BEGIN
     IF NEW.parent_id IS NULL THEN
-        NEW.path = NEW.slug::LTREE;
+        -- Replace hyphens with underscores for LTREE compatibility
+        NEW.path = REPLACE(NEW.slug, '-', '_')::LTREE;
         NEW.depth = 0;
     ELSE
         SELECT path, depth INTO parent_path, parent_depth
         FROM categories
         WHERE id = NEW.parent_id;
 
-        NEW.path = parent_path || NEW.slug::TEXT;
+        -- Replace hyphens with underscores for LTREE compatibility
+        NEW.path = parent_path || REPLACE(NEW.slug, '-', '_')::TEXT;
         NEW.depth = parent_depth + 1;
     END IF;
     RETURN NEW;
@@ -40,13 +42,13 @@ CREATE TRIGGER set_category_path BEFORE INSERT OR UPDATE ON categories
 -- Update existing categories to calculate their paths
 -- Start with root categories (no parent)
 UPDATE categories
-SET path = slug::LTREE, depth = 0
+SET path = REPLACE(slug, '-', '_')::LTREE, depth = 0
 WHERE parent_id IS NULL;
 
 -- Update child categories recursively
 WITH RECURSIVE category_hierarchy AS (
     -- Base case: root categories
-    SELECT id, parent_id, slug, slug::LTREE as path, 0 as depth
+    SELECT id, parent_id, slug, REPLACE(slug, '-', '_')::LTREE as path, 0 as depth
     FROM categories
     WHERE parent_id IS NULL
 
@@ -54,7 +56,7 @@ WITH RECURSIVE category_hierarchy AS (
 
     -- Recursive case: child categories
     SELECT c.id, c.parent_id, c.slug,
-           (ch.path || c.slug::TEXT)::LTREE as path,
+           (ch.path || REPLACE(c.slug, '-', '_')::TEXT)::LTREE as path,
            ch.depth + 1 as depth
     FROM categories c
     INNER JOIN category_hierarchy ch ON c.parent_id = ch.id

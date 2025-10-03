@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react'
 import { FriksiAuth, type User } from '@/lib/database'
+import { logger } from '@/lib/logger'
 
 interface AuthContextType {
   user: User | null
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profile = await FriksiAuth.getCurrentUserProfile()
       setUser(profile)
     } catch (error) {
-      console.error('Error checking session:', error)
+      logger.error('Error checking session:', error)
     } finally {
       setLoading(false)
     }
@@ -96,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await FriksiAuth.signOut()
       setUser(null)
     } catch (error) {
-      console.error('Logout error:', error)
+      logger.error('Logout error:', error)
     }
   }
 

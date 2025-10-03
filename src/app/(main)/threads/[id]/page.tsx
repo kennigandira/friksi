@@ -19,7 +19,7 @@ export default function ThreadDetailPage({ params }: ThreadDetailPageProps) {
         </Grid.Col>
 
         <Grid.Col span={{ base: 12, md: 4 }}>
-          <VotePanel threadId={params.id} />
+          <VotePanel contentId={params.id} contentType="thread" />
         </Grid.Col>
       </Grid>
     </Container>
