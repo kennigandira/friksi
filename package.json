@@ -23,18 +23,21 @@
     "db:reset": "supabase db reset",
     "db:migrate": "supabase db push",
     "db:seed": "supabase seed",
-    "colima:setup": "ln -sf $HOME/.colima/default/docker.sock /tmp/docker.sock && echo 'Colima Docker socket symlink created at /tmp/docker.sock'",
-    "supabase:start": "export DOCKER_HOST='unix:///tmp/docker.sock' && supabase start --exclude vector",
-    "supabase:stop": "export DOCKER_HOST='unix:///tmp/docker.sock' && supabase stop",
-    "supabase:status": "export DOCKER_HOST='unix:///tmp/docker.sock' && supabase status"
+    "docker:detect": "if [ -S $HOME/.orbstack/run/docker.sock ]; then echo 'unix://'$HOME'/.orbstack/run/docker.sock'; elif [ -S $HOME/.colima/default/docker.sock ]; then echo 'unix://'$HOME'/.colima/default/docker.sock'; else echo 'unix:///var/run/docker.sock'; fi",
+    "supabase:start": "export DOCKER_HOST=$(pnpm -s docker:detect) && supabase start --exclude vector",
+    "supabase:stop": "export DOCKER_HOST=$(pnpm -s docker:detect) && supabase stop",
+    "supabase:status": "export DOCKER_HOST=$(pnpm -s docker:detect) && supabase status",
+    "build:cf": "opennextjs-cloudflare build",
+    "preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
-    "@mantine/carousel": "^8.3.2",
     "@mantine/core": "^8.3.2",
     "@mantine/form": "^8.3.2",
     "@mantine/hooks": "^8.3.2",
     "@mantine/modals": "^8.3.2",
     "@mantine/notifications": "^8.3.2",
+    "@opennextjs/cloudflare": "^1.9.1",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
     "@radix-ui/react-slot": "^1.0.2",
@@ -44,8 +47,6 @@
     "@tabler/icons-react": "^3.35.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-    "embla-carousel": "^8.5.2",
-    "embla-carousel-react": "^8.5.2",
     "lucide-react": "^0.344.0",
     "next": "^14.1.0",
     "react": "^18.2.0",
@@ -71,6 +72,7 @@
     "prettier": "^3.2.5",
     "supabase": "^1.142.2",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "wrangler": "^4.41.0"
   }
 }

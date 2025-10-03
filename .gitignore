@@ -123,6 +123,12 @@ public
 # Vercel
 .vercel
 
+# Cloudflare
+.wrangler/
+.open-next/
+.dev.vars
+.cloudflare/
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts

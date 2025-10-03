@@ -4,9 +4,14 @@ import { ColorSchemeScript, MantineProvider } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
 import { ModalsProvider } from '@mantine/modals'
 import { AuthProvider } from '@/hooks/use-auth'
+import { validateEnv } from '@/lib/env'
 import './globals.css'
 import '@mantine/core/styles.css'
-import '@mantine/carousel/styles.css'
+
+// Validate environment variables on server startup
+if (typeof window === 'undefined') {
+  validateEnv()
+}
 
 const inter = Inter({ subsets: ['latin'] })
 

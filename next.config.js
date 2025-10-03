@@ -1,16 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@friksi/ui', '@friksi/database'],
   images: {
-    domains: [],
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/api/auth/:path*',
-        destination: '/api/auth/:path*',
-      },
-    ]
+    remotePatterns: [
+      // Add patterns when needed, example:
+      // {
+      //   protocol: 'https',
+      //   hostname: '**.supabase.co',
+      //   pathname: '/storage/v1/object/public/**',
+      // },
+    ],
   },
   // PWA configuration
   async headers() {
