@@ -119,7 +119,7 @@ export class CategoryHelpers {
         ? createServerSupabaseClient()
         : getBrowserSupabaseClient()
 
-      let query = supabase
+      const query = supabase
         .from('categories')
         .select(`
           *,
