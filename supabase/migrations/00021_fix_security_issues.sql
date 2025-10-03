@@ -165,35 +165,35 @@ $$ LANGUAGE plpgsql SET search_path = '';
 CREATE OR REPLACE FUNCTION calculate_category_path()
 RETURNS TRIGGER AS $$
 DECLARE
-  parent_path ltree;
+  parent_path public.ltree;
 BEGIN
   IF NEW.parent_id IS NULL THEN
-    NEW.path = NEW.slug::ltree;
+    NEW.path = NEW.slug::public.ltree;
   ELSE
     SELECT path INTO parent_path FROM categories WHERE id = NEW.parent_id;
-    NEW.path = parent_path || NEW.slug::ltree;
+    NEW.path = parent_path || NEW.slug::public.ltree;
   END IF;
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SET search_path = 'public, extensions';
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- Calculate comment path function
 CREATE OR REPLACE FUNCTION calculate_comment_path()
 RETURNS TRIGGER AS $$
 DECLARE
-  parent_path ltree;
+  parent_path public.ltree;
 BEGIN
   IF NEW.parent_id IS NULL THEN
-    NEW.path = NEW.id::text::ltree;
+    NEW.path = NEW.id::text::public.ltree;
   ELSE
     SELECT path INTO parent_path FROM comments WHERE id = NEW.parent_id;
-    NEW.path = parent_path || NEW.id::text::ltree;
+    NEW.path = parent_path || NEW.id::text::public.ltree;
   END IF;
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SET search_path = 'public, extensions';
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- Update thread activity function
 CREATE OR REPLACE FUNCTION update_thread_activity()
@@ -339,34 +339,34 @@ $$ LANGUAGE plpgsql SET search_path = '';
 -- Drop and recreate to fix parameter name issue
 DROP FUNCTION IF EXISTS generate_comment_path(UUID);
 CREATE FUNCTION generate_comment_path(p_parent_id UUID)
-RETURNS ltree AS $$
+RETURNS public.ltree AS $$
 DECLARE
-  parent_path ltree;
+  parent_path public.ltree;
   new_id TEXT;
 BEGIN
   new_id := gen_random_uuid()::TEXT;
 
   IF p_parent_id IS NULL THEN
-    RETURN new_id::ltree;
+    RETURN new_id::public.ltree;
   ELSE
     SELECT path INTO parent_path FROM comments WHERE id = p_parent_id;
-    RETURN parent_path || new_id::ltree;
+    RETURN parent_path || new_id::public.ltree;
   END IF;
 END;
-$$ LANGUAGE plpgsql SET search_path = 'public, extensions';
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- Get category path function
 -- Drop and recreate to fix return type issue
 DROP FUNCTION IF EXISTS get_category_path(UUID);
 CREATE FUNCTION get_category_path(p_category_id UUID)
-RETURNS ltree AS $$
+RETURNS public.ltree AS $$
 DECLARE
-  cat_path ltree;
+  cat_path public.ltree;
 BEGIN
   SELECT path INTO cat_path FROM categories WHERE id = p_category_id;
   RETURN cat_path;
 END;
-$$ LANGUAGE plpgsql SET search_path = 'public, extensions';
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- Get thread stats function
 -- Drop and recreate to fix return type issue
@@ -485,21 +485,21 @@ $$ LANGUAGE plpgsql SET search_path = '';
 CREATE OR REPLACE FUNCTION set_comment_path()
 RETURNS TRIGGER AS $$
 DECLARE
-  parent_path ltree;
+  parent_path public.ltree;
 BEGIN
   IF NEW.parent_id IS NULL THEN
-    NEW.path = NEW.id::text::ltree;
+    NEW.path = NEW.id::text::public.ltree;
   ELSE
     SELECT path INTO parent_path FROM comments WHERE id = NEW.parent_id;
     IF parent_path IS NULL THEN
       RAISE EXCEPTION 'Parent comment not found';
     END IF;
-    NEW.path = parent_path || NEW.id::text::ltree;
+    NEW.path = parent_path || NEW.id::text::public.ltree;
   END IF;
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SET search_path = 'public, extensions';
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- Update thread comment count function
 CREATE OR REPLACE FUNCTION update_thread_comment_count()
@@ -679,38 +679,12 @@ END;
 $$ LANGUAGE plpgsql SET search_path = '';
 
 -- ============================================
--- 3. FIX RECOMMENDED: Move extensions to dedicated schema
+-- 3. FIX RECOMMENDED: Extensions in public schema
 -- ============================================
 
--- Create extensions schema if it doesn't exist
-CREATE SCHEMA IF NOT EXISTS extensions;
-
--- Grant usage on extensions schema to authenticated and anon roles
-GRANT USAGE ON SCHEMA extensions TO authenticated, anon;
-
--- Check and move ltree extension to extensions schema if not already there
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'ltree' AND extnamespace = 'public'::regnamespace) THEN
-    ALTER EXTENSION ltree SET SCHEMA extensions;
-  END IF;
-END $$;
-
--- Check and move pg_trgm extension to extensions schema if not already there
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm' AND extnamespace = 'public'::regnamespace) THEN
-    ALTER EXTENSION pg_trgm SET SCHEMA extensions;
-  END IF;
-END $$;
-
--- Update database search_path to include extensions schema
--- This ensures extensions can be used without schema qualification
-ALTER DATABASE postgres SET search_path TO public, extensions;
-
--- Note: After moving extensions, we need to update references to use the schema
--- The ltree type references in functions above already use public.ltree which will
--- continue to work as long as the search_path includes extensions
+-- Note: Extensions (ltree, pg_trgm) remain in public schema for compatibility
+-- Extension schema migration removed due to permission constraints in Supabase
+-- All ltree type references use public.ltree to be explicit
 
 -- ============================================
 -- Verification queries (commented out, for manual verification)

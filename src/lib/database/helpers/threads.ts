@@ -79,10 +79,13 @@ export class ThreadHelpers {
       limit?: number
       offset?: number
       includeRemoved?: boolean
+      useServerClient?: boolean
     } = {}
   ): Promise<{ threads: Thread[]; error: string | null }> {
     try {
-      const supabase = getBrowserSupabaseClient()
+      const supabase = options.useServerClient
+        ? createServerSupabaseClient()
+        : getBrowserSupabaseClient()
       const {
         sortBy = 'hot',
         limit = 20,
@@ -321,10 +324,13 @@ export class ThreadHelpers {
       limit?: number
       offset?: number
       minLevel?: UserLevel
+      useServerClient?: boolean
     } = {}
   ): Promise<{ threads: Thread[]; error: string | null }> {
     try {
-      const supabase = getBrowserSupabaseClient()
+      const supabase = options.useServerClient
+        ? createServerSupabaseClient()
+        : getBrowserSupabaseClient()
       const { limit = 20, offset = 0 } = options
 
       let query = supabase

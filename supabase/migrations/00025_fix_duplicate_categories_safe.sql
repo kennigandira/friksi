@@ -4,7 +4,7 @@
 CREATE TEMP TABLE category_mappings AS
 SELECT
   slug,
-  MIN(id) as keep_id,
+  (array_agg(id ORDER BY id))[1] as keep_id,
   array_agg(id ORDER BY id) as all_ids
 FROM categories
 GROUP BY slug

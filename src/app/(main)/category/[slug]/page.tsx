@@ -51,7 +51,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       sortBy: sort,
       limit,
       offset: (page - 1) * limit,
-      includeRemoved: false
+      includeRemoved: false,
+      useServerClient: true
     }
   )
 

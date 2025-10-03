@@ -358,32 +358,32 @@ $$ LANGUAGE plpgsql SET search_path = '';
 
 -- Generate comment path (for ltree)
 CREATE FUNCTION generate_comment_path(p_parent_id UUID)
-RETURNS extensions.ltree AS $$
+RETURNS public.ltree AS $$
 DECLARE
-  parent_path extensions.ltree;
+  parent_path public.ltree;
   new_id TEXT;
 BEGIN
   new_id := gen_random_uuid()::TEXT;
 
   IF p_parent_id IS NULL THEN
-    RETURN new_id::extensions.ltree;
+    RETURN new_id::public.ltree;
   ELSE
     SELECT path INTO parent_path FROM comments WHERE id = p_parent_id;
-    RETURN parent_path || new_id::extensions.ltree;
+    RETURN parent_path || new_id::public.ltree;
   END IF;
 END;
-$$ LANGUAGE plpgsql SET search_path = '';
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- Get category path
 CREATE FUNCTION get_category_path(p_category_id UUID)
-RETURNS extensions.ltree AS $$
+RETURNS public.ltree AS $$
 DECLARE
-  cat_path extensions.ltree;
+  cat_path public.ltree;
 BEGIN
   SELECT path INTO cat_path FROM categories WHERE id = p_category_id;
   RETURN cat_path;
 END;
-$$ LANGUAGE plpgsql SET search_path = '';
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- Get thread statistics
 CREATE FUNCTION get_thread_stats(p_thread_id UUID)

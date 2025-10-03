@@ -68,13 +68,12 @@ USING (
   )
 )
 WITH CHECK (
-  -- Ensure only specific fields can be updated
-  reporter_id = OLD.reporter_id
-  AND content_type = OLD.content_type
-  AND content_id = OLD.content_id
-  AND reason = OLD.reason
-  AND details = OLD.details
-  AND created_at = OLD.created_at
+  -- Moderators can update reports
+  EXISTS (
+    SELECT 1 FROM moderators
+    WHERE user_id = auth.uid()
+    AND is_active = true
+  )
 );
 
 -- Users cannot update their own reports after submission
