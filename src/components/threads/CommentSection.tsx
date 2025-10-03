@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import {
   Stack,
   Card,
@@ -9,92 +10,344 @@ import {
   Group,
   Avatar,
   ActionIcon,
+  Skeleton,
+  Alert,
+  Badge,
 } from '@mantine/core'
-import { IconArrowUp, IconArrowDown, IconCornerDownRight } from '@tabler/icons-react'
+import { IconArrowUp, IconArrowDown, IconCornerDownRight, IconAlertCircle } from '@tabler/icons-react'
+import { CommentHelpers, type NestedComment } from '@/lib/database'
+import { useAuth } from '@/hooks/use-auth'
+import { notifications } from '@mantine/notifications'
+import { logger } from '@/lib/logger'
 
 interface CommentSectionProps {
   threadId: string
 }
 
-// Mock comment data
-const mockComments = [
-  {
-    id: '1',
-    content:
-      "Great points! I especially agree about the dedicated bus lanes. We've seen how effective they are in other cities.",
-    author: { username: 'transit_fan', avatar_url: null, level: 2 },
-    upvotes: 8,
-    downvotes: 1,
-    createdAt: '2024-01-15T11:15:00Z',
-    replies: [
-      {
-        id: '2',
-        content:
-          'Yes! And they should be enforced properly. Too often I see cars using bus lanes.',
-        author: { username: 'bus_rider', avatar_url: null, level: 1 },
-        upvotes: 3,
-        downvotes: 0,
-        createdAt: '2024-01-15T11:30:00Z',
-        replies: [],
-      },
-    ],
-  },
-]
-
 export function CommentSection({ threadId }: CommentSectionProps) {
-  const renderComment = (comment: any, depth = 0) => (
-    <Stack key={comment.id} gap="sm" ml={depth * 20}>
-      <Card p="md" shadow="xs" withBorder>
-        <Group gap="sm" mb="sm">
-          <Avatar size="sm" src={comment.author.avatar_url}>
-            {comment.author.username[0].toUpperCase()}
-          </Avatar>
-          <Text size="sm" fw={500}>
-            {comment.author.username}
-          </Text>
-          <Text size="xs" c="dimmed">
-            Level {comment.author.level}
-          </Text>
-          <Text size="xs" c="dimmed">
-            {new Date(comment.createdAt).toLocaleDateString()}
-          </Text>
-        </Group>
+  const { user } = useAuth()
+  const [comments, setComments] = useState<NestedComment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [commentContent, setCommentContent] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+  const [replyContent, setReplyContent] = useState('')
 
-        <Text mb="sm">{comment.content}</Text>
+  // Fetch comments on mount
+  useEffect(() => {
+    fetchComments()
+  }, [threadId])
 
-        <Group gap="xs">
-          <Group gap={4}>
-            <ActionIcon variant="subtle" size="sm">
-              <IconArrowUp size={12} />
-            </ActionIcon>
-            <Text size="sm">{comment.upvotes - comment.downvotes}</Text>
-            <ActionIcon variant="subtle" size="sm">
-              <IconArrowDown size={12} />
-            </ActionIcon>
+  const fetchComments = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const { comments: fetchedComments, error: fetchError } =
+        await CommentHelpers.getThreadComments(threadId, {
+          sortBy: 'best',
+          maxDepth: 10,
+        })
+
+      if (fetchError) {
+        setError(fetchError)
+        logger.error('Failed to fetch comments:', fetchError)
+        return
+      }
+
+      setComments(fetchedComments)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load comments'
+      setError(errorMessage)
+      logger.error('Error fetching comments:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSubmitComment = async () => {
+    if (!user) {
+      notifications.show({
+        title: 'Authentication required',
+        message: 'Please log in to post comments',
+        color: 'yellow',
+      })
+      return
+    }
+
+    if (!commentContent.trim()) {
+      return
+    }
+
+    try {
+      setSubmitting(true)
+
+      const { comment, error } = await CommentHelpers.createComment({
+        thread_id: threadId,
+        user_id: user.id,
+        content: commentContent.trim(),
+        parent_id: null,
+      })
+
+      if (error) {
+        notifications.show({
+          title: 'Error',
+          message: error,
+          color: 'red',
+        })
+        return
+      }
+
+      notifications.show({
+        title: 'Success',
+        message: 'Comment posted successfully',
+        color: 'green',
+      })
+
+      setCommentContent('')
+      await fetchComments() // Refresh comments
+    } catch (err) {
+      logger.error('Error posting comment:', err)
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to post comment',
+        color: 'red',
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleSubmitReply = async (parentId: string) => {
+    if (!user) {
+      notifications.show({
+        title: 'Authentication required',
+        message: 'Please log in to post replies',
+        color: 'yellow',
+      })
+      return
+    }
+
+    if (!replyContent.trim()) {
+      return
+    }
+
+    try {
+      setSubmitting(true)
+
+      const { comment, error } = await CommentHelpers.createComment({
+        thread_id: threadId,
+        user_id: user.id,
+        content: replyContent.trim(),
+        parent_id: parentId,
+      })
+
+      if (error) {
+        notifications.show({
+          title: 'Error',
+          message: error,
+          color: 'red',
+        })
+        return
+      }
+
+      notifications.show({
+        title: 'Success',
+        message: 'Reply posted successfully',
+        color: 'green',
+      })
+
+      setReplyContent('')
+      setReplyingTo(null)
+      await fetchComments() // Refresh comments
+    } catch (err) {
+      logger.error('Error posting reply:', err)
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to post reply',
+        color: 'red',
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const renderComment = (comment: NestedComment, depth = 0) => {
+    const author = comment.users || { username: 'Unknown', avatar_url: null, level: 1 }
+    const maxDepth = 5 // Maximum visible nesting depth
+
+    return (
+      <Stack key={comment.id} gap="sm" ml={depth < maxDepth ? depth * 32 : maxDepth * 32}>
+        <Card p="md" shadow="xs" withBorder>
+          <Group gap="sm" mb="sm">
+            <Avatar size="sm" src={author.avatar_url}>
+              {author.username[0]?.toUpperCase()}
+            </Avatar>
+            <Text size="sm" fw={500}>
+              {author.username}
+            </Text>
+            {author.level && (
+              <Badge size="xs" color="blue">
+                Level {author.level}
+              </Badge>
+            )}
+            <Text size="xs" c="dimmed">
+              {new Date(comment.created_at).toLocaleDateString()}
+            </Text>
+            {comment.edited_at && (
+              <Text size="xs" c="dimmed" fs="italic">
+                (edited)
+              </Text>
+            )}
           </Group>
 
-          <ActionIcon variant="subtle" size="sm">
-            <IconCornerDownRight size={12} />
-          </ActionIcon>
-        </Group>
-      </Card>
+          <Text mb="sm" style={{ whiteSpace: 'pre-wrap' }}>
+            {comment.is_removed ? (
+              <Text c="dimmed" fs="italic">[Comment removed]</Text>
+            ) : (
+              comment.content
+            )}
+          </Text>
 
-      {comment.replies?.map((reply: any) => renderComment(reply, depth + 1))}
-    </Stack>
-  )
+          {!comment.is_removed && (
+            <Group gap="xs">
+              <Group gap={4}>
+                <ActionIcon variant="subtle" size="sm">
+                  <IconArrowUp size={12} />
+                </ActionIcon>
+                <Text size="sm">{comment.upvotes - comment.downvotes}</Text>
+                <ActionIcon variant="subtle" size="sm">
+                  <IconArrowDown size={12} />
+                </ActionIcon>
+              </Group>
+
+              <ActionIcon
+                variant="subtle"
+                size="sm"
+                onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+              >
+                <IconCornerDownRight size={12} />
+              </ActionIcon>
+              <Text size="xs" c="dimmed">Reply</Text>
+            </Group>
+          )}
+
+          {replyingTo === comment.id && (
+            <Stack gap="sm" mt="md">
+              <Textarea
+                placeholder="Write your reply..."
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                minRows={2}
+              />
+              <Group gap="xs">
+                <Button
+                  size="xs"
+                  onClick={() => handleSubmitReply(comment.id)}
+                  loading={submitting}
+                  disabled={!replyContent.trim()}
+                >
+                  Post Reply
+                </Button>
+                <Button
+                  size="xs"
+                  variant="subtle"
+                  onClick={() => {
+                    setReplyingTo(null)
+                    setReplyContent('')
+                  }}
+                >
+                  Cancel
+                </Button>
+              </Group>
+            </Stack>
+          )}
+        </Card>
+
+        {comment.replies && comment.replies.length > 0 && (
+          <>
+            {comment.replies.map((reply) => renderComment(reply, depth + 1))}
+          </>
+        )}
+
+        {comment.replyCount > (comment.replies?.length || 0) && depth >= maxDepth && (
+          <Text size="xs" c="dimmed" ml={32}>
+            {comment.replyCount - (comment.replies?.length || 0)} more {comment.replyCount - (comment.replies?.length || 0) === 1 ? 'reply' : 'replies'}
+          </Text>
+        )}
+      </Stack>
+    )
+  }
+
+  if (loading) {
+    return (
+      <Stack gap="lg">
+        <Card p="md" shadow="sm" withBorder>
+          <Skeleton height={80} mb="md" />
+          <Skeleton height={32} width={100} />
+        </Card>
+        <Stack gap="md">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} p="md" shadow="xs" withBorder>
+              <Group gap="sm" mb="sm">
+                <Skeleton height={32} circle />
+                <Skeleton height={16} width={80} />
+                <Skeleton height={14} width={60} />
+              </Group>
+              <Skeleton height={60} />
+              <Group gap="xs" mt="sm">
+                <Skeleton height={24} width={80} />
+                <Skeleton height={24} width={60} />
+              </Group>
+            </Card>
+          ))}
+        </Stack>
+      </Stack>
+    )
+  }
+
+  if (error) {
+    return (
+      <Alert icon={<IconAlertCircle size={16} />} color="red">
+        Failed to load comments: {error}
+      </Alert>
+    )
+  }
 
   return (
     <Stack gap="lg">
       <Card p="md" shadow="sm" withBorder>
-        <Textarea placeholder="Add a comment..." minRows={3} mb="md" />
+        <Textarea
+          placeholder={user ? "Add a comment..." : "Please log in to comment"}
+          minRows={3}
+          mb="md"
+          value={commentContent}
+          onChange={(e) => setCommentContent(e.target.value)}
+          disabled={!user || submitting}
+        />
         <Group justify="flex-end">
-          <Button>Post Comment</Button>
+          <Button
+            onClick={handleSubmitComment}
+            disabled={!user || !commentContent.trim() || submitting}
+            loading={submitting}
+          >
+            Post Comment
+          </Button>
         </Group>
       </Card>
 
-      <Stack gap="md">
-        {mockComments.map(comment => renderComment(comment))}
-      </Stack>
+      {comments.length === 0 ? (
+        <Card p="xl" shadow="xs" withBorder>
+          <Text ta="center" c="dimmed">
+            No comments yet. Be the first to comment!
+          </Text>
+        </Card>
+      ) : (
+        <Stack gap="md">
+          {comments.map(comment => renderComment(comment))}
+        </Stack>
+      )}
     </Stack>
   )
 }

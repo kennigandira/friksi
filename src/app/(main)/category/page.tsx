@@ -2,14 +2,56 @@ import {
   Container,
   Title,
   SimpleGrid,
-  Card,
+  Alert,
   Text,
-  Badge,
-  Group,
 } from '@mantine/core'
+import { IconInfoCircle } from '@tabler/icons-react'
 import { CategoryCard } from '@/components/threads/CategoryCard'
+import { CategoryHelpers } from '@/lib/database/helpers/categories'
+import { createServerSupabaseClient } from '@/lib/database/lib/server'
 
-export default function CategoriesPage() {
+export const revalidate = 60 // Revalidate every 60 seconds
+
+export default async function CategoriesPage() {
+  // Get the current user (if authenticated) using our existing server client
+  const supabase = createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Fetch categories from database with subscription status
+  const { categories, error } = await CategoryHelpers.getCategories({
+    useServerClient: true,
+    userId: user?.id,
+    parentId: null, // Only get top-level categories
+  })
+
+  if (error) {
+    return (
+      <Container size="lg">
+        <Title order={1} mb="xl">
+          Discussion Categories
+        </Title>
+        <Alert icon={<IconInfoCircle size={16} />} color="red" title="Error loading categories">
+          <Text>Unable to load categories. Please try again later.</Text>
+          <Text size="sm" c="dimmed" mt="xs">{error}</Text>
+        </Alert>
+      </Container>
+    )
+  }
+
+  // If no categories exist, show a message
+  if (categories.length === 0) {
+    return (
+      <Container size="lg">
+        <Title order={1} mb="xl">
+          Discussion Categories
+        </Title>
+        <Alert icon={<IconInfoCircle size={16} />} color="blue">
+          <Text>No categories available yet. Check back soon!</Text>
+        </Alert>
+      </Container>
+    )
+  }
+
   return (
     <Container size="lg">
       <Title order={1} mb="xl">
@@ -17,59 +59,21 @@ export default function CategoriesPage() {
       </Title>
 
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-        <CategoryCard
-          name="Technology"
-          slug="technology"
-          description="Discuss the latest in tech, programming, and innovation"
-          threadCount={234}
-          subscriberCount={1250}
-          isSubscribed={false}
-        />
-
-        <CategoryCard
-          name="Politics"
-          slug="politics"
-          description="Civil political discussions and policy debates"
-          threadCount={189}
-          subscriberCount={890}
-          isSubscribed={true}
-        />
-
-        <CategoryCard
-          name="Science"
-          slug="science"
-          description="Scientific discoveries, research, and discussions"
-          threadCount={156}
-          subscriberCount={720}
-          isSubscribed={false}
-        />
-
-        <CategoryCard
-          name="Environment"
-          slug="environment"
-          description="Climate change, sustainability, and environmental topics"
-          threadCount={98}
-          subscriberCount={540}
-          isSubscribed={true}
-        />
-
-        <CategoryCard
-          name="Local Issues"
-          slug="local"
-          description="Discuss issues affecting your local community"
-          threadCount={67}
-          subscriberCount={320}
-          isSubscribed={false}
-        />
-
-        <CategoryCard
-          name="Education"
-          slug="education"
-          description="Educational policy, school systems, and learning"
-          threadCount={45}
-          subscriberCount={280}
-          isSubscribed={false}
-        />
+        {categories.map((category) => (
+          <CategoryCard
+            key={category.id}
+            id={category.id}
+            name={category.name}
+            slug={category.slug}
+            description={category.description || ''}
+            threadCount={category.post_count || 0}
+            subscriberCount={category.subscriber_count || 0}
+            isSubscribed={category.is_subscribed || false}
+            color={category.color}
+            iconUrl={category.icon_url}
+            userId={user?.id}
+          />
+        ))}
       </SimpleGrid>
     </Container>
   )

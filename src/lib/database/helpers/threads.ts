@@ -1,12 +1,12 @@
 import { getBrowserSupabaseClient } from '../lib/browser'
 import { createServerSupabaseClient } from '../lib/server'
+import { getTypedClient, TableInsert } from '../lib/typed-client'
 import type {
   Tables,
   TablesInsert,
   TablesUpdate,
   UserLevel,
 } from '../types/database.types'
-import { getTypedClient, TableInsert, TableUpdate } from '../lib/typed-client'
 
 export type Thread = Tables<'threads'>
 export type ThreadInsert = TablesInsert<'threads'>
@@ -145,17 +145,17 @@ export class ThreadHelpers {
     try {
       const supabase = getBrowserSupabaseClient()
 
-      const { data: thread, error } = await supabase
+      const { data: thread, error } = (await supabase
         .from('threads')
         .select(
           `
           *,
-          users!threads_user_id_fkey(username, avatar_url, level, is_bot),
+          users!threads_user_id_fkey(username, avatar_url, level),
           categories!threads_category_id_fkey(name, slug, path)
         `
         )
         .eq('id', threadId)
-        .single() as { data: any; error: any }
+        .single()) as { data: any; error: any }
 
       if (error) {
         return { thread: null, error: error.message }
@@ -295,7 +295,10 @@ export class ThreadHelpers {
       if (options.categoryId) {
         params.category_filter = options.categoryId
       }
-      const { data: threads, error } = await typedClient.rpc('search_threads', params)
+      const { data: threads, error } = await typedClient.rpc(
+        'search_threads',
+        params
+      )
 
       if (error) {
         return { threads: [], error: error.message }
@@ -329,7 +332,7 @@ export class ThreadHelpers {
         .select(
           `
           *,
-          users!threads_user_id_fkey(username, avatar_url, level, is_bot),
+          users!threads_user_id_fkey(username, avatar_url, level),
           categories!threads_category_id_fkey(name, slug)
         `
         )
@@ -413,10 +416,13 @@ export class ThreadHelpers {
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 7)
 
-      const { data: threads, error: fetchError } = await supabase
+      const { data: threads, error: fetchError } = (await supabase
         .from('threads')
         .select('id, upvotes, downvotes, created_at')
-        .gte('created_at', weekAgo.toISOString()) as { data: any[] | null; error: any }
+        .gte('created_at', weekAgo.toISOString())) as {
+        data: any[] | null
+        error: any
+      }
 
       if (fetchError) {
         return { updated: 0, error: fetchError.message }
